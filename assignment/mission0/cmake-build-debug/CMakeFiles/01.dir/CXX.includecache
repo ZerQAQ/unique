@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+F:/recent/unique/assignment/01/sort.cpp
+bits/stdc++.h
+-
+tree.cpp
+F:/recent/unique/assignment/01/tree.cpp
+
+F:/recent/unique/assignment/01/tree.cpp
+bits/stdc++.h
+-
+
