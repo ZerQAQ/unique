@@ -1,0 +1,612 @@
+<html>
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<style type = "text/css">
+			html, body{
+				scroll-behavior: smooth;
+			}
+			.clear{
+				margin: 0px;
+				border: 0px;
+				padding: 0px;
+				overflow-x :hidden;
+			}
+			.nav{
+				top: 0;
+				position: fixed;
+				width: 100%;
+				margin: 0px;
+				border-bottom: 1px solid #b0b0b0;
+				background-color: #ffffff;
+				z-index: 100;
+			}
+			.nav-dropdown{
+				top: 80px;
+				position: fixed;
+				width: 100%;
+				z-index: 100;
+				justify-content: center;
+				overflow: hidden;
+				display: flex;
+			}
+
+			.nav-dropdown div {
+				flex-grow: 1;
+				flex-shrink: 1;
+				display: flex;
+				flex-direction: column;
+				background-color: #ffffff;
+				justify-content: center;
+				border: 1px solid #d0d0d0;
+				border-right: none;
+				padding: 1% 3% 1% 3%;
+			}
+
+			.nav-dropdown div:hover {
+				background-color: rgb(254,102,0);
+			}
+
+			.nav-dropdown div div{
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				border: none;
+				padding: 0;
+				background-color: inherit;
+			}
+
+			.nav-dropdown h1, a{
+				text-align: center;
+				flex-grow: 1;
+				flex-shrink: 1;
+			}
+			.nav-dropdown h1{
+				margin-top: 0px;
+				margin-bottom: 12px;
+				line-height: 28px;
+				font-weight: normal;
+				color: #a0a0a0;
+				font-size: 20px;
+			}
+			.nav-dropdown a{
+				margin-bottom: 0px;
+				line-height: 30px;
+				color: #707070;
+				cursor: pointer;
+			}
+			.nav-dropdown a:hover{
+				margin-bottom: 0px;
+				line-height: 30px;
+				text-decoration: underline;
+				color: #707070;
+			}
+			.lnavblock img, .lnavblock a{
+				line-height: 80px;
+				margin: 0px 1.5% 0px 1.5%;
+				font-size: 17px;
+				color: #a0a0a0;
+				float: left;
+				text-decoration: none;
+			}
+			.rnavblock{
+				width: 80px;
+				float: right;
+				line-height: 80px;
+				margin: 0px;
+				font-size: 14px;
+				display: flex;
+				justify-content: center;
+			}
+			.rnavblock a{
+				text-align: center;
+				float: right;
+				height: 30px;
+				text-decoration: none;
+				color: #000000;
+				font-size: 14px;
+				margin-left: 5px;
+				margin-right: 5px;
+			}
+			.rnavblock a:hover{
+				text-align: center;
+				float: right;
+				height: 30px;
+				text-decoration: underline;
+				color: #000000;
+				font-size: 14px;
+			}
+			.sel{
+				margin: 30px 0px 30px 0px;
+				float: right;
+				z-index: 300;
+			}
+			.searchblock{
+				background: url("imgs/icons/top_searchbg.png");
+				width: 275px;
+				height: 34px;
+				margin: 23px 4% 23px 4%;
+				float: right;
+			}
+			.search{
+				width: 220px;
+				height: 28px;
+				margin: 3px 10px 3px 10px;
+				border: none;
+				outline: none;
+			}
+			.showpics{
+				width: 100%;
+			}
+			.empty_nav{
+				width: 100%;
+				height: 80px;
+			}
+			.title {
+				width: 100%;
+				margin-top: 20px;
+				margin-bottom: 20px;
+			}
+			.title h1{
+				font-size: 25px;
+				text-align: center;
+				width: 100%;
+				color: #595959;
+				font-weight: normal;
+				margin-bottom: 0px;
+			}
+			.title p{
+				font-size: 5px;
+				color: #808080;
+				text-align: center;
+				width: 100%;
+				margin-top: 0px;
+				line-height: normal;
+				margin: 0;
+			}
+			.picsblock1{
+				display: flex;
+				justify-content: center;
+				margin-left: 10%;
+				margin-right: 10%;
+				margin-bottom: 2%;
+				margin-top: 2%;
+			}
+			.picsblock1 img{
+				margin-left: 0.8%;
+				margin-right: 0.8%;
+				width: 1%;
+				flex-grow: 1;
+			}
+			.textblock1{
+				display: flex;
+				justify-content: center;
+				margin-left: 10%;
+				margin-right: 10%;
+			}
+			.textblock1 div{
+				width: 1%;
+				margin-left: 0.8%;
+				margin-right: 0.8%;
+				margin-bottom: 2%;
+				flex-grow: 1;
+			}
+			.textblock1 div p{
+				float: left;
+				color: #808080;
+				font-size: 13px;
+				margin: 13px 5px 13px 5px;
+				line-height: normal;
+			}
+			.textblock1 div h1{
+				float: right;
+				color: rgb(254,102,0);
+				font-size: 13px;
+				font-weight: normal;
+				margin: 13px 5px 13px 5px;
+				line-height: normal;
+			}
+			.textblock1 div img{
+				float: right;
+				margin: 15px 5px 15px 5px;
+			}
+			.groups{
+				display: flex;
+				justify-content: center;
+				margin-left: 10%;
+				margin-right: 10%;
+				margin-bottom: 2.5%;
+				margin-top: 2.5%;
+			}
+			.group-block {
+				flex-grow: 1;
+				flex-shrink: 1;
+				width: 1px;
+				margin: 0px;
+				margin-left: 0.8%;
+				margin-right: 0.8%;
+				position: relative;
+			}
+			.group-block div{
+				width: 100%;
+			}
+			.group-block div h1{
+				float: right;
+				color: rgb(254,102,0);
+				font-size: 13px;
+				font-weight: normal;
+				padding: 13px 5px 13px 5px;
+				margin: 0px;
+				line-height: normal;
+			}
+			.group-block div p{
+				float: left;
+				color: #808080;
+				font-size: 13px;
+				padding: 13px 5px 13px 5px;
+				margin: 0px;
+				line-height: normal;
+			}
+			.group-block div img{
+				flex-grow: 1;
+				flex-shrink: 1;
+				float: right;
+				margin: 15px 5px 15px 5px;
+				width: auto;
+			}
+			.group-block img{
+				flex-grow: 1;
+				flex-shrink: 1;
+				width: 100%;
+				margin: 0px;
+			}
+			.group-animation{
+				position: absolute;
+				bottom: 0px;
+				height: 0px;
+			}
+			.animation1{
+				position: absolute;
+				background-image: linear-gradient(rgba(255, 255, 255, 0), rgb(60,50,58));
+				height: 0px;
+				bottom: 0px;
+				left: 0px;
+				overflow: hidden;
+			}
+			#animation1-text{
+				position: absolute;
+				margin: 10px;
+				bottom: 0px;
+				text-align: center;
+				font-size: 30px;
+				color: #ddd;
+			}
+			.peoples{
+				display: flex;
+				justify-content: flex-start;
+				margin-left: 10%;
+				margin-right: 10%;
+				margin-bottom: 2.5%;
+				margin-top: 2.5%;
+			}
+			.member{
+				width: 70%;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				margin-left: 2%;
+				margin-right: 2%; 
+			}
+			.new{
+				width: 25%;
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-start;
+				margin-left: 2%;
+				margin-right: 2%; 
+				border-bottom: 1px solid #ddd;
+			}
+			.new-line{
+				display: flex;
+				justify-content: center;
+				width: 100%;
+				padding: 10px;
+				padding-bottom: 0px;
+			}
+			.new-block{
+				width: 1%;
+				display: flex;
+				justify-content: center;
+				flex-direction: column;
+				flex-grow: 1;
+				position: relative;
+				margin: 2%;
+			}
+			.new-block:hover{
+				background-color: rgb(254,102,0);
+			}
+			.new-block:hover p{
+				color: #fff;
+			}
+			.new-block img{
+				flex-grow: 1;
+				width: 100%;
+			}
+			.new-block p{
+				font-size: 13px;
+				color: #666;
+				position: relative;
+				bottom: 0px;
+				line-height: 100%;
+				display: block;
+				width: 100%;
+				text-align: center;
+				margin: 20% 0% 20% 0%;
+			}
+			.title2{
+				width: 100%;
+				border-bottom: 1px solid #ddd;
+				padding: 10px;
+			}
+			.title2 h1{
+				float: left;
+				margin: 0;
+				font-weight: normal;
+				line-height: 100%;
+				color: #666;
+			}
+			.title2 p{
+				float: right;
+				margin: 0;
+				font-size: 10px;
+				line-height: 100%;
+				color: #666;
+				line-height: 32px;
+			}
+			.comment{
+				position: relative;
+				display: flex;
+				justify-content: center;
+				width: 100%;
+				border-bottom: 1px solid #ddd;
+				margin: 10px;
+			}
+
+			.animation2{
+				position: absolute;
+				left: 0px;
+				height: 100%;
+				width: 0%;
+				background-color: rgb(254,102,0);
+				z-index: -100;
+				transition: width 1s;
+				-moz-transition: width 1s; /* Firefox 4 */
+				-webkit-transition: width 1s; /* Safari 和 Chrome */
+				-o-transition: width 1s; /* Opera */
+			}
+
+			.comment:hover .animation2{
+				width: 100%;
+			}
+
+			.comment:hover .content h1{
+				color: #fff;
+			}
+
+			.comment:hover .content p{
+				color: #fff;
+			}
+
+
+			.comment-head{
+				width: 20%;
+				display: flex;
+				justify-content: center;
+				margin: 2%;
+			}
+
+			.comment-head img{
+				width: 1%;
+				flex-grow: 1;
+			}
+
+			.content{
+				width: 80%;
+				margin: 2%;
+			}	
+
+			.content h1{
+				font-size: 20px;
+				font-weight: normal;
+				margin: 0px;
+				margin-bottom: 1%;
+				margin-top: 1%;
+				color: #333;
+			}
+			.content p{
+				font-size: 15px;
+				line-height: 100%;
+				margin: 0px;
+				color: #999;
+			}
+			.support{
+				margin: 10%;
+			}
+		</style>
+	</head>
+
+	<body class = "clear" onmousemove = "mousemove(event)">
+		<a name = "j1"> </a>
+		<a href = "#j1"> <img id = "topbtn" src = "imgs/icons/top01.png" style = "position: fixed; right: 1%; bottom: 20%; cursor: pointer;"> </img> </a>
+		<div class = "nav" id = "nav">
+			<div class = "lnavblock">
+				<img src = "imgs/icons/site-logo.png" height = "80px" >
+				<a href = "#j1" > 首页 </a>
+				<a href = "#j2" > 精选 </a>
+				<a href = "#j3" > 其他 </a>
+				<a href = "#j4" > 成员 </a>
+			</div>
+			<div class = "rnavblock" style = "width: 10px; height: 80px"> </div>
+
+			<div class = "rnavblock">
+				<a href = "" > 注册 </a>
+				<a href = "" > 登录 </a>
+			</div>
+			<div class = "rnavblock" style = "width: 40px">
+				<img src = "imgs\icons\top_cate_class.png" class = "sel" id = "sel" >
+			</div>
+			<div class = "searchblock">
+				<input type = "text" class = "search" \>
+			</div>
+		</div>
+
+		<div class = "nav-dropdown" id = "dropdown-content">
+		</div>
+		<script type = "text/javascript" src = "nav-dropdown.js"> </script>
+
+		<div class = "empty_nav"> </div>
+
+		<div class = "showpics" id = "showpics">
+			<img src = "imgs/pics/1.jpg" width = "100%" id = "picture1">
+			<img src = "imgs/pics/2.jpg" width = "100%" id = "picture2" style = "position: absolute; left: 0px; top: 80px;">
+			<div id = "triger"> </div>
+			<div id = "pic-lbtn"> </div>
+			<div id = "pic-rbtn"> </div>
+			<script type = "text/javascript" src = "triger.js"> </script>
+		</div>
+
+		<div style = "width: 100%; height: 50px"> </div>
+
+		<a name = "j2" style = "position: relative; bottom: 60px"> </a>
+
+		<div class = "title">
+			<h1> Unique-Web </h1>
+			<p> Fantastic group </p>
+		</div>
+
+
+		<div class = "groups" id = "group-web">
+		</div>
+
+		<a name = "j3" style = "position: relative; bottom: 80px"> </a>
+
+		<div class = "title">
+			<h1> Other-groups </h1>
+			<p> Fantastic group </p>
+		</div>
+		<script type = "text/javascript" src = "groups.js"> </script>
+
+		<div style = "width: 100%; margin: 100px; border: 0.5px solid #ddd"> </div>
+
+		<div class = "peoples">
+			<div class = "member">
+				<div class = "title2">
+					<a name = "j4"><h1> 成员 </h1></a>
+					<p> 更多>> </p>
+				</div>
+				<div class = "comment">
+					<div class = "animation2"> </div>
+					<div class = "comment-head">
+						<img src = "imgs/icons/avatar.png"> </img>
+					</div>
+					<div class = "content">
+						<h1> 小洪 </h1>
+						<p> 可以说是很气愤了 </p>
+					</div>
+				</div>
+				<div class = "comment">
+					<div class = "animation2"> </div>
+					<div class = "comment-head">
+						<img src = "imgs/icons/avatar.png"> </img>
+					</div>
+					<div class = "content">
+						<h1> 小红 </h1>
+						<p> 莫生气，莫生气，别人生气我不气 </p>
+					</div>
+				</div>
+				<div class = "comment">
+					<div class = "animation2"> </div>
+					<div class = "comment-head">
+						<img src = "imgs/icons/avatar.png"> </img>
+					</div>
+					<div class = "content">
+						<h1> 小鸿 </h1>
+						<p> 莫生气，莫生气，别人生气我不气 </p>
+					</div>
+				</div>
+			</div>
+			<div class = "new">
+				<div class = "title2">
+					<h1> 新进 </h1>
+				</div>
+				<div class = "new-line">
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+				</div>
+				<div class = "new-line">
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+				</div>
+				<div class = "new-line">
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+					<div class = "new-block">
+						<span class = "support" ><img src = "imgs/icons/avatar.png"> </img></span>
+						<p> Web </p>
+						<div> </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+
+</html>

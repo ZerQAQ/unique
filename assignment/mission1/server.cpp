@@ -12,7 +12,7 @@ using namespace std;
 const char* notFind = "HTTP/1.1 404 Not found\n\n404 Not found";
 const char* STR_GET = "GET";
 
-int split(char *s, char (*ss)[100], const char *sp = " \n"){
+int split(const char *s, char (*ss)[100], const char *sp = " \n"){
     int spLen = strlen(sp), sLen = strlen(s), ssPointer = 0;
     int last = 0;
     for(int i = 0; i < sLen; i++){
@@ -22,6 +22,10 @@ int split(char *s, char (*ss)[100], const char *sp = " \n"){
                 isItv = 1;
                 break;
             }
+        }
+        if(i == sLen - 1){
+            i++;
+            isItv = 1;
         }
         if(isItv){
             int ssP = 0;
@@ -55,18 +59,6 @@ void stringToCharPointer(string s, char* d){
         d[i] = s[i];
     }
     d[len + 1] = '\0';
-}
-
-void prtStr(char* s){
-    int len = strlen(s);
-    for(int i = 0; i < len; i++){
-        printf("%d'%c|", (int)s[i], s[i]);
-    }
-    printf("\n");
-    for(int i = 0; i < len; i++){
-        printf("%c", s[i]);
-    }
-    printf("\n");
 }
 
 class TCPserver
@@ -142,39 +134,89 @@ public:
         }
 	}
 
+    void respondGetRequest(int sock, const char* protocal, const char* path){
+        FILE *f = fopen(path, "rb");
+        if(f == NULL){
+            write(sock, notFind, strlen(notFind));
+        }
+        else{
+            char head[50];
+            copyString(head, protocal);
+            const char* temp = " 200 OK\n\n";
+            copyString(head + strlen(protocal), temp);
+            int headLen = strlen(protocal) + strlen(temp);
+            head[headLen] = '\0';
+            write(sock, head, headLen);
+
+            /*
+            printf("path: %s\n", path);
+            char strings[2][100];
+            split(path, strings, ".");
+            char *type = strings[1];
+            printf("type: %s\n", type);
+            */
+            
+            int respBufPointer = 0, maxRespBufLen = 1024;
+            char respBuf[maxRespBufLen + 10], c;
+
+            /*
+            if(type == "X"){
+                for(;;){
+                    c = fgetc(f);
+                    if(c != EOF) respBuf[respBufPointer++] = c;
+                    if(respBufPointer == maxRespBufLen || c == EOF){
+                        respBuf[respBufPointer] = '\0';
+                        write(sock, respBuf, respBufPointer);
+                        respBufPointer = 0;
+                        printf("buflen:%d\n", respBufPointer);
+                    }
+                    if(c == EOF) break;
+                }
+            }
+            */
+            for(;;){
+                int freadRet = fread(respBuf, sizeof(char), maxRespBufLen, f);
+                write(sock, respBuf, freadRet);
+                if(freadRet < maxRespBufLen) break;
+            }
+            
+            fclose(f);
+        }
+    }
+
     void work(){
         bind(serverSock, (struct sockaddr*) &sockAddr, sizeof(sockAddr));
         listen(serverSock, 128);
 
         struct sockaddr_in clnt_addr;
         socklen_t clnt_addr_size = sizeof(clnt_addr);
-        int clientSock = accept(serverSock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
 
         for(;;){
-            char _buf[bufMaxLen];
-            int readRet = readLine(clientSock, _buf);
-            if(readRet <= 0){
-                break;
-            }
 
-            char __buf[4] = {_buf[0], _buf[1], _buf[2], '\0'};
-            if(cmpString(__buf, "GET")){
-                printf("%s", _buf);
-                char strings[20][100];
-                int spLen = split(_buf, strings);
-                for(int i = 0; i < spLen; i++){
-                    printf("%s\n", strings[i]);
+            int clientSock = accept(serverSock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
+
+            for(;;){
+                char _buf[bufMaxLen];
+                int readRet = readLine(clientSock, _buf);
+                if(readRet <= 0){
+                    break;
+                }
+
+                char __buf[4] = {_buf[0], _buf[1], _buf[2], '\0'};
+                if(cmpString(__buf, "GET")){
+                    printf("%s", _buf);
+                    char strings[5][100];
+                    int spLen = split(_buf, strings);
+                    for(int i = 0; i < spLen; i++){
+                        printf("%s\n", strings[i]);
+                    }
+                    respondGetRequest(clientSock, strings[2], strings[1] + 1);
                 }
             }
-
+    		
+    		close(clientSock);
         }
-        
-        printf("sedding message...\n");
-        write(clientSock, notFind, strlen(notFind));
-		
-		close(clientSock);
-		close(serverSock);
-		init();
+        close(serverSock);
     }
 
     ~TCPserver(){
@@ -185,6 +227,6 @@ public:
 
 int main(){
     TCPserver s("127.0.0.1", 80);
-	s.work();
+	for(;;) s.work();
     return 0;
 }
