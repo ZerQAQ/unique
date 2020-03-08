@@ -14,7 +14,7 @@ using namespace std;
 const char* notFind = "HTTP/1.1 404 Not found\n\n404 Not found\0";
 const char* STR_GET = "GET";
 
-int split(const char *s, char (*ss)[100], const char *sp = " \n"){
+int split(const char *s, char (*ss)[100], const char *sp = " "){
     int spLen = strlen(sp), sLen = strlen(s), ssPointer = 0;
     int last = 0;
     for(int i = 0; i < sLen; i++){
@@ -25,14 +25,14 @@ int split(const char *s, char (*ss)[100], const char *sp = " \n"){
                 break;
             }
         }
-        /*
         if(i == sLen - 1){
+            i++;
             isItv = 1;
         }
-        */
         if(isItv){
             int ssP = 0;
             for(int j = last; j < i; j++){
+                if(s[j] == '\n' || s[j] == '\r') continue;
                 ss[ssPointer][ssP++] = s[j];
             }
             ss[ssPointer++][ssP] = '\0';
@@ -59,7 +59,7 @@ void copyString(char* d, const char* s, int end = 0){
 void prtstr(char *s){
     int len = strlen(s);
     for(int i = 0; i < len; i++){
-        printf("%d|", (int) s[i]);
+        printf("%d %c|", (int) s[i], s[i]);
     }
     printf("\n");
 }
@@ -108,12 +108,15 @@ public:
 
     void pop(){
         if(len){
+            struct buffer *t = head;
             head = head->next;
+            delete t;
             len--;
         }
     }
 
     buffer* front(){
+        if(!len) return NULL;
         return head;
     }
 
@@ -198,6 +201,7 @@ struct clientSock{
     int readLine(char* ret){
         int retPointer = 0;
 		for(;;){
+            printf("bp %d bl %d\n", bufPointer, bufLen);
             if(bufPointer == bufLen){
                 bufPointer = bufLen = 0;
 
@@ -294,7 +298,7 @@ public:
             copyString(head, protocal);
             const char *temp = " 200 ok\n\n";
             copyString(head + strlen(protocal), temp, 1);
-            printf("\nhead:\n%s\n", head);
+            printf("head:%s", head);
 
             clientptr->bufs.push(new buffer(head));
             clientptr->bufs.write(f);
@@ -318,7 +322,8 @@ public:
         for(;;){
             char _buf[clientSock::bufMaxLen];
             int readRet = clientptr->readLine(_buf);
-            //printf("readRet:%d\n", readRet);
+            printf("readRet:%d\n", readRet);
+            //printf("%s\n", _buf); //magic printf
             if(readRet <= 0){
                 if(readRet == 0){
                     closeClient(clientptr);
@@ -335,8 +340,8 @@ public:
                     printf("%s", _buf);
                     char strings[5][100];
                     int spLen = split(_buf, strings);
-                    prtstr(strings[1]);
-                    prtstr(strings[2]);
+                    //prtstr(strings[1]);
+                    //prtstr(strings[2]);
                     respondGetRequest(clientptr, strings[2], strings[1] + 1);
                 }
             }
@@ -347,11 +352,11 @@ public:
 
     void handleWrite(void *ptr){
         struct clientSock *clientptr = (struct clientSock *) ptr;
-        printf("\nhandling write (fd = %d)\n", clientptr->sock);
+        //printf("\nhandling write (fd = %d)\n", clientptr->sock);
         //printf("bufslen:%d\n", clientptr->bufs.len);
         long long byteNum = 0;
         while(!clientptr->bufs.empty()){
-            //printf("in write while\n");
+            //printf("in write while bufslen:%d\n", clientptr->bufs.len);
             //printf("head size:%d\n", clientptr->bufs.head->size);
             struct buffer *head = clientptr->bufs.head;
             if(!(head->size)){
