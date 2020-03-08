@@ -56,6 +56,14 @@ void copyString(char* d, const char* s, int end = 0){
     }
 }
 
+void prtstr(char *s){
+    int len = strlen(s);
+    for(int i = 0; i < len; i++){
+        printf("%d|", (int) s[i]);
+    }
+    printf("\n");
+}
+
 // 设置socket为非阻塞
 void set_nonblocking(int fd) {
     int flag = fcntl(fd, F_GETFL, 0);
@@ -327,6 +335,8 @@ public:
                     printf("%s", _buf);
                     char strings[5][100];
                     int spLen = split(_buf, strings);
+                    prtstr(strings[1]);
+                    prtstr(strings[2]);
                     respondGetRequest(clientptr, strings[2], strings[1] + 1);
                 }
             }
