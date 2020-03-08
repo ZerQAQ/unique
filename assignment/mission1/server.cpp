@@ -52,7 +52,7 @@ bool cmpString(const char *a, const char *b){
 void copyString(char* d, const char* s, int end = 0){
     memcpy(d, s, strlen(s) * sizeof(char));
     if(end){
-        d[strlen(s) + 1] = '\0';
+        d[strlen(s)] = '\0';
     }
 }
 
@@ -190,7 +190,7 @@ struct clientSock{
     class bufferList bufs;
 
     int bufLen, bufPointer;
-	static const int bufMaxLen = 1024;
+	static const int bufMaxLen = 100;
     char buf[bufMaxLen];
 
     clientSock(int _sock){
@@ -296,7 +296,7 @@ public:
         else{
             char head[100];
             copyString(head, protocal);
-            const char *temp = " 200 ok\n\n";
+            const char *temp = " 200 ok\n\n\0";
             copyString(head + strlen(protocal), temp, 1);
             printf("head:%s", head);
 
@@ -322,8 +322,6 @@ public:
         for(;;){
             char _buf[clientSock::bufMaxLen];
             int readRet = clientptr->readLine(_buf);
-            printf("readRet:%d\n", readRet);
-            //printf("%s\n", _buf); //magic printf
             if(readRet <= 0){
                 if(readRet == 0){
                     closeClient(clientptr);
