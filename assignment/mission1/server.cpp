@@ -201,7 +201,7 @@ struct clientSock{
     int readLine(char* ret){
         int retPointer = 0;
 		for(;;){
-            printf("bp %d bl %d\n", bufPointer, bufLen);
+            //printf("bp %d bl %d\n", bufPointer, bufLen);
             if(bufPointer == bufLen){
                 bufPointer = bufLen = 0;
 
@@ -298,7 +298,7 @@ public:
             copyString(head, protocal);
             const char *temp = " 200 ok\n\n\0";
             copyString(head + strlen(protocal), temp, 1);
-            printf("head:%s", head);
+            //printf("%s", head);
 
             clientptr->bufs.push(new buffer(head));
             clientptr->bufs.write(f);
@@ -350,7 +350,7 @@ public:
 
     void handleWrite(void *ptr){
         struct clientSock *clientptr = (struct clientSock *) ptr;
-        //printf("\nhandling write (fd = %d)\n", clientptr->sock);
+        printf("\nhandling write (fd = %d)\n", clientptr->sock);
         //printf("bufslen:%d\n", clientptr->bufs.len);
         long long byteNum = 0;
         while(!clientptr->bufs.empty()){
