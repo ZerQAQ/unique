@@ -14,6 +14,8 @@ using namespace std;
 const char* notFind = "HTTP/1.1 404 Not found\n\n404 Not found\0";
 const char* STR_GET = "GET";
 
+
+//切割字符串 忽略\n和\r
 int split(const char *s, char (*ss)[100], const char *sp = " "){
     int spLen = strlen(sp), sLen = strlen(s), ssPointer = 0;
     int last = 0;
@@ -42,12 +44,14 @@ int split(const char *s, char (*ss)[100], const char *sp = " "){
     return ssPointer;
 }
 
+//比较字符串
 bool cmpString(const char *a, const char *b){
     int lena = strlen(a), lenb = strlen(b);
     if(lena != lenb) return 0;
     for(int i = 0; i <= lena; i++) if(a[i] != b[i]) return 0;
     return 1;
 }
+
 
 void copyString(char* d, const char* s, int end = 0){
     memcpy(d, s, strlen(s) * sizeof(char));
@@ -65,7 +69,7 @@ void prtstr(char *s){
 }
 
 // 设置socket为非阻塞
-void set_nonblocking(int fd) {
+void setNonblocking(int fd) {
     int flag = fcntl(fd, F_GETFL, 0);
     if (flag >= 0) {
         fcntl(fd, F_SETFL, flag | O_NONBLOCK);
@@ -145,6 +149,7 @@ public:
         clear();
     }
 
+    //把文件加入缓存链表
     int write(FILE *f){
         if(len >= maxNoteNum) return -1; //这个判断放在外面 尽量每次都读完整的一个文件
         for(;;){
@@ -167,6 +172,7 @@ public:
     }
 };
 
+//添加读事件
 void epollAdd(int epfd, int fd, void *d = NULL){
     struct epoll_event e;
     e.events = EPOLLIN;
@@ -174,6 +180,7 @@ void epollAdd(int epfd, int fd, void *d = NULL){
     epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &e);
 }
 
+//添加写事件
 void epollWrite(int epfd, int fd, int enabled, void *d){
     struct epoll_event e;
     e.events = EPOLLIN | (enabled ? EPOLLOUT: 0);
@@ -257,7 +264,7 @@ public:
         sockAddr.sin_port = htons(_port);  //端口
 
         epollfd = epoll_create(maxClientNum);
-        set_nonblocking(serverSock);
+        setNonblocking(serverSock);
         printf("Server inited.\n");
     }
 
@@ -274,7 +281,7 @@ public:
             printf("\nclient connect: (fd = %d)\n", clientfd);
 
             if(clientNum < maxClientNum){
-                set_nonblocking(clientfd);
+                setNonblocking(clientfd);
                 struct clientSock *cs = new clientSock(clientfd);
                 clients.insert(cs);
                 epollAdd(epollfd, clientfd, cs);
