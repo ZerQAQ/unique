@@ -38,17 +38,17 @@
 	- uid(int64)
 		- motionid(int64)
 			- text
-				- 1
 			- photo
 				- num(int64)
 			- voice
-				- 1
 			- accept
-				- 1
+- main.exe
 
 ## API:
 
-所有API返回的json数据中都有msg字段和retc字段，所以下面返回的格式里我只写除msg和retc之外的字段
+根目录是/kuro
+
+所有API返回的json数据中都有msg字段，retc字段和data字段
 
 msg是服务器返回的信息 retc是返回代码
 
@@ -56,12 +56,13 @@ retc说明：
 - 2 emotion上传成功
 - 1 正常
 - -1 服务器错误
-- -2 资源不存在
-- -3 权限不足（skey错误或失效）
+- -2 资源不存在/用户ID已存在
+- -3 权限不足（skey错误或失效）/用户名或密码错误
+- -4 数据格式错误 (不是合法的json)
 
-下面的API下第一个代码段是请求体格式，第二个是回复体格式
+下面的API下第一个代码段是请求体格式，第二个是回复体中data字段格式
 
-password字段是SHA256加密后的十六进制字符串 字母小写
+password字段是SHA256加密后的十六进制字符串 字母小写(测试的时候也可以是长度小于64的字符串)
 
 skey是纯数字 长度在40以内
 
@@ -103,7 +104,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 {"nick": [string100], emotionNum: int64}
 ```
 
-### POST /user?type=modify 
+### POST /user?skey=&type=modify 
 修改用户昵称
 ```
 {"nick": [string100]}
@@ -200,7 +201,8 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 {"data": string}
 ```
 
-### GET /src/photo/:id/:num&skey= 
+### GET /src/photo/:id/:num&skey=
+
 获取id为:id的心情的第:num张照片(从1开始计数)
 ```
 ```
@@ -209,6 +211,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 ```
 
 ### GET /src/voice/:id&skey= 
+
 获取id为:id的心情的语音
 ```
 ```
