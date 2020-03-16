@@ -177,7 +177,7 @@ type、content:
 ```
 返回：
 {
-	"page": int64 页序号
+	"page": int64, 页序号
 	"num": int64, emotionList的长度
 	$emotionList
 }
@@ -189,7 +189,8 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 	"stars": int64,
 	"type": int64,
 	"content": int64,
-	"photoNum": int64
+	"photoNum": int64,
+	"createdAt": int64 (Unix时间戳 创建时间)
 }
 ```
 
@@ -198,7 +199,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 ```
 ```
 ```
-{"data": string}
+字符串
 ```
 
 ### GET /src/photo/:id/:num&skey=

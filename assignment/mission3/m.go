@@ -4,28 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-xorm/xorm"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"strconv"
 	"time"
 )
 
 type log struct {
-	Id int64 `json: "id"`
-	Password string `json: "password" `
+	Id int64 `json: "id" xorm:pk`
+	Password string `json: "password" xorm:varchar(64)`
+	CreatedAt time.Time `xorm:"created"`
 }
 
 type user struct {
-	Id int64 `json:"id"`
-	Nick string `json:"nick"`
+	Id int64 `json:"id" xorm:pk`
+	Nick string `json:"nick" xorm:varchar(100)`
 	EmotionNum int64 `json:"emotionNum"`
 }
 
 type emotion struct {
-	Id      int64 `json:"id"`
-	Uid     int64 `json:"uid"`
+	Id      int64 `json:"id" xorm:pk`
+	Uid     int64 `json:"uid" xorm:pk`
 	Stars   int64 `json:"stars"`
 	Type int64 `json:"type"`
 	Content int64 `json:"content"`
@@ -81,6 +83,8 @@ var OK = "ok"
 var ServerError = "serverError"
 var TypeError = "typeError"
 var SkeyFail = "skeyFail"
+var Mottos []string
+var MottosLen int64
 
 func quickResp(cmd string, c *gin.Context){
 	if cmd == OK{
@@ -104,6 +108,24 @@ func quickResp(cmd string, c *gin.Context){
 			"retc": -3,
 		})
 	}
+}
+
+func fullResp(c *gin.Context, d *gin.H){
+	c.JSON(200, gin.H{
+		"msg": "ok",
+		"retc": 1,
+		"data": &d,
+	})
+}
+
+func readFile(path string) []byte {
+	f, err := os.Open(path)
+	t, _ := ioutil.ReadAll(f)
+	f.Close()
+	if err != nil {
+		myLog(fmt.Sprintf("ERROR when openning %v \n", path))
+	}
+	return t
 }
 
 func postUser(c *gin.Context)  {
@@ -138,29 +160,20 @@ func postUser(c *gin.Context)  {
 
 		if has { //ID存在
 
-			str, _ := json.Marshal(map[string]interface{}{
+			c.JSON(403, gin.H{
 				"msg": "id has already exist",
 				"retc": -2,
 			})
-			c.String(403, string(str))
 			return
 		}
 
 		Sql.Insert(newUser)
 		_, err := Sql.Insert(user{Id: newUser.Id})
 		if err == nil{ //ok
-			str, _ := json.Marshal(map[string]interface{}{
-				"msg": "ok",
-				"retc": 0,
-			})
-			c.String(200, string(str))
+			quickResp(OK, c)
 		} else { //服务器错误
 			fmt.Print("ERROR:\n%v\n", err)
-			str, _ := json.Marshal(map[string]interface{}{
-				"smg": "server error",
-				"retc": -1,
-			})
-			c.String(500, string(str))
+			quickResp(ServerError, c)
 		}
 	} else {quickResp("typeError", c)}
 }
@@ -178,18 +191,16 @@ func postLogin(c *gin.Context)  {
 	ok, _ = Sql.Where("id = ? and password = ?", id, password).Get(new(log))
 	if ok {
 		skey := newSession(id, lifetime)
-		str, _ := json.Marshal(map[string]interface{}{
+		c.JSON(200, gin.H{
 			"msg": "ok",
 			"retc": 1,
 			"skey": skey,
 		})
-		c.String(200, string(str))
 	} else {
-		str, _ := json.Marshal(map[string]interface{}{
+		c.JSON(403, gin.H{
 			"msg": "id or password wrong",
 			"retc": -3,
 		})
-		c.String(403, string(str))
 	}
 }
 
@@ -217,6 +228,14 @@ func getUser(c *gin.Context)  {
 	}
 }
 
+func getMotto(c *gin.Context)  {
+	fmt.Printf("getmotto\n")
+	fullResp(c, &gin.H{
+		"content": Mottos[rand.Int63() % MottosLen],
+	})
+	fmt.Printf("ret\n")
+}
+
 func main() {
 	rand.Seed(time.Now().Unix())
 	Sql, _ = xorm.NewEngine("mysql", "root:123456@/test?charset=utf8")
@@ -227,10 +246,13 @@ func main() {
 	Sql.Sync2(new(emotion))
 	Router = gin.Default()
 	r := Router.Group("/kuro")
+	json.Unmarshal(readFile("motto.json"), &Mottos)
+	MottosLen = int64(len(Mottos))
 
 	r.Handle("POST", "/user", postUser)
 	r.Handle("POST", "/login", postLogin)
 	r.Handle("GET", "/user", getUser)
+	r.Handle("GET", "/motto", getMotto)
 
 	Router.Run()
 }
