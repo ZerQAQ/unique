@@ -8,6 +8,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -66,6 +67,26 @@ func delSession (str string) int64 {
 	return 1
 }
 
+func maintainSeesion(){
+	for true {
+		for id := range Sessions{
+			life := SessionsLifetime[id]
+			if life < time.Now().Unix() {
+				delete(Sessions, id)
+				delete(SessionsLifetime, id)
+			}
+		}
+		time.Sleep(3600 * time.Second) //一个小时清理一次skey
+	}
+}
+
+func sqlConnectKeepAlife(){
+	for true {
+		Sql.Ping()
+		time.Sleep(100 * time.Second) //100秒ping一次 保持连接鲜活
+	}
+}
+
 func myLog(str string)  {
 	fmt.Printf("[%v] %v", time.Now().String(), str)
 }
@@ -79,12 +100,17 @@ func idExist(id int64) bool{
 	return ok1 && ok2
 }
 
-var OK = "ok"
-var ServerError = "serverError"
-var TypeError = "typeError"
-var SkeyFail = "skeyFail"
-var Mottos []string
-var MottosLen int64
+var (
+	OK = "ok"
+	ServerError = "serverError"
+	TypeError = "typeError"
+	SkeyFail = "skeyFail"
+	NotExist = "notExist"
+	WrongLoginInfo = "wrongLoginInfo"
+
+	Mottos [][]string
+	MottosLen int64
+)
 
 func quickResp(cmd string, c *gin.Context){
 	if cmd == OK{
@@ -107,10 +133,20 @@ func quickResp(cmd string, c *gin.Context){
 			"msg": "skey fail",
 			"retc": -3,
 		})
+	} else if cmd == NotExist{
+		c.JSON(404, gin.H{
+			"msg": "source not exist",
+			"retc": -2,
+		})
+	} else if cmd == WrongLoginInfo{
+		c.JSON(403, gin.H{
+			"msg": "wrong login info",
+			"retc": -3,
+		})
 	}
 }
 
-func fullResp(c *gin.Context, d *gin.H){
+func fullResp(c *gin.Context, d interface{}){
 	c.JSON(200, gin.H{
 		"msg": "ok",
 		"retc": 1,
@@ -118,7 +154,7 @@ func fullResp(c *gin.Context, d *gin.H){
 	})
 }
 
-func readFile(path string) []byte {
+func readStringFile(path string) []byte {
 	f, err := os.Open(path)
 	t, _ := ioutil.ReadAll(f)
 	f.Close()
@@ -204,6 +240,18 @@ func postLogin(c *gin.Context)  {
 	}
 }
 
+func postLogout(c *gin.Context)  {
+	skey := c.DefaultQuery("skey", "null")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	} else {
+		delSession(skey)
+		quickResp(OK, c)
+		return
+	}
+}
+
 func getUser(c *gin.Context)  {
 	skey := c.DefaultQuery("skey", "null")
 	if skey == "null" || checkSession(skey) == -1 {
@@ -218,22 +266,38 @@ func getUser(c *gin.Context)  {
 		}
 		var userData user
 		Sql.Id(id).Get(&userData)
-		str, _ := json.Marshal(userData)
-		c.JSON(200, gin.H{
-			"msg": "ok",
-			"retc": 1,
-			"data": string(str),
-		})
+		fullResp(c, &userData)
 		return
 	}
 }
 
 func getMotto(c *gin.Context)  {
 	fmt.Printf("getmotto\n")
+	k := rand.Int63() % MottosLen
 	fullResp(c, &gin.H{
-		"content": Mottos[rand.Int63() % MottosLen],
+		"content": Mottos[k][0],
+		"author": Mottos[k][1],
 	})
 	fmt.Printf("ret\n")
+}
+
+func Cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		method := c.Request.Method
+
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+		c.Header("Access-Control-Allow-Credentials", "true")
+
+		//放行所有OPTIONS方法
+		if method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+		}
+		// 处理请求
+		c.Next()
+	}
 }
 
 func main() {
@@ -245,14 +309,19 @@ func main() {
 	Sql.Sync2(new(log))
 	Sql.Sync2(new(emotion))
 	Router = gin.Default()
+	Router.Use(Cors())
 	r := Router.Group("/kuro")
-	json.Unmarshal(readFile("motto.json"), &Mottos)
+	json.Unmarshal(readStringFile("motto.json"), &Mottos)
 	MottosLen = int64(len(Mottos))
 
 	r.Handle("POST", "/user", postUser)
 	r.Handle("POST", "/login", postLogin)
+	r.Handle("POST", "/logout", postLogout)
 	r.Handle("GET", "/user", getUser)
 	r.Handle("GET", "/motto", getMotto)
+
+	go maintainSeesion()
+	go sqlConnectKeepAlife()
 
 	Router.Run()
 }

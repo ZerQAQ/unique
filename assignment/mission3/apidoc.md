@@ -12,11 +12,11 @@
 
 	nick[string100]
 
-	emtionNum[int64]
+	eemotionNum[int64]
 
 	createdAt[int64]
 
-### TABLE motion:
+### TABLE emotion:
 
 	id[int64](pk) 心情id
 	
@@ -28,16 +28,29 @@
 
 	content[int64] 0~15 是否有文字照片和语音和悦纳，分别用第0~2二进制位表示,例如只有照片和文字且已经悦纳的心情的content是1011，即11
 
+	brief[string20]
+
+	tid[int64]
+
 	photoNum[int64] 0~9 照片数量
 
 	createdAt[int64]
+
+### TABLE emotionText:
+
+	id[int64](pk)
+
+	uid[int64]
+
+	eid[int64]
+
+	content:[string2000]
 
 ## DIR
 
 - src
 	- uid(int64)
-		- motionid(int64)
-			- text
+		- emotionid(int64)
 			- photo
 				- num(int64)
 			- voice
@@ -53,7 +66,7 @@
 msg是服务器返回的信息 retc是返回代码
 
 retc说明：
-- 2 emotion上传成功
+- 2 eemotion上传成功
 - 1 正常
 - -1 服务器错误
 - -2 资源不存在/用户ID已存在
@@ -86,10 +99,9 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 {"skey": [string]}
 ```
 
-### POST /logout 
+### POST /logout?skey=
 退出登录
 ```
-{"skey": [string]}
 ```
 ```
 {}
@@ -101,7 +113,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 
 ```
 ```
-{"nick": [string100], emotionNum: int64}
+{"nick": [string100], eemotionNum: int64}
 ```
 
 ### POST /user?skey=&type=modify 
@@ -116,7 +128,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 
 全部发送成功之后返回的包里的retc字段是2
 
-### POST /motion?skey=
+### POST /emotion?skey=
 ```
 {
 	"id": int64,
@@ -131,7 +143,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 
 ### POST /src/text/:id 
-motionid为:id的文字
+emotionid为:id的文字
 ```
 字符串 不用json格式
 ```
@@ -139,7 +151,7 @@ motionid为:id的文字
 ```
 
 ### POST /src/voice/:id 
-motionid为:id的语音
+emotionid为:id的语音
 ```
 二进制文件
 ```
@@ -147,19 +159,23 @@ motionid为:id的语音
 ```
 
 ### POST /src/voice/:id/:num 
-motionid为:id的第num张图片
+emotionid为:id的第num张图片
 ```
 二进制文件
 ```
 ```
 ```
 
-### GET /motion?skey=&type=&content=&page=&rank=&search=
-获取id为:id的用户motion列表，可指定获取特定type和content的motion，可分页（一页数量最多20条，从0开始计数，-1代表返回所有数据），可排序（按照星星数量、日期等）
+### GET /emotion?skey=&type=&content=&page=&rank=&search=
 
-search是模糊搜索，默认是空字符串，代表不搜索
+search
+	模糊搜索给定的字符串，默认是空字符串，代表不搜索
 
-其余所有筛选用字段的默认值都是-1，-1代表该条件不参与筛选
+page:
+	页序号，一页最多20条信息
+
+content、type:
+	获取特定content和type的emotion，content和type的说明见TABLE emotion
 
 rank:
 - 0 不排序
@@ -167,10 +183,6 @@ rank:
 - -1 按照时间升序排序
 - 2 按照星星数量降序排序
 - -2 按照星星升序排序
-
-type、content:
-
-- 见TABLE motion的说明
 
 ```
 ```
@@ -228,7 +240,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 字符串
 ```
 
-### POST /motion/:id?skey=&type=modify 
+### POST /emotion/:id?skey=&type=modify 
 悦纳id为:id的心情
 ```
 {"content": string} 悦纳的内容
@@ -237,7 +249,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 {}
 ```
 
-### POST /motion/:id?skey=&type=delete 
+### POST /emotion/:id?skey=&type=delete 
 删除id为:id的心情
 ```
 ```
@@ -250,5 +262,5 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 ```
 ```
 ```
-{"content": string, "author": string, "ref": string}
+{"content": string, "author": string}
 ```

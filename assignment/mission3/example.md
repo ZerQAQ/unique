@@ -9,11 +9,15 @@ Cache-Control: no-cache
 
 ```
 HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
-Date: Mon, 16 Mar 2020 13:29:01 GMT
-Content-Length: 49
+Content-Type: application/json; charset=utf-8
+Date: Mon, 16 Mar 2020 19:59:33 GMT
+Content-Length: 51
 
-{"msg":"ok","retc":1,"skey":"947406850690932915"}
+{
+  "msg": "ok",
+  "retc": 1,
+  "skey": "8672257192191626248"
+}
 ```
 
 ## 2
@@ -46,11 +50,15 @@ Accept: application/json
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
-Date: Mon, 16 Mar 2020 13:31:14 GMT
-Content-Length: 76
+Date: Mon, 16 Mar 2020 19:53:04 GMT
+Content-Length: 66
 
 {
-  "data": "{\"id\":1,\"nick\":\"owo\",\"emotionNum\":0}",
+  "data": {
+    "id": 2,
+    "nick": "owo",
+    "emotionNum": 0
+  },
   "msg": "ok",
   "retc": 1
 }
