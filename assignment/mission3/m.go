@@ -17,7 +17,7 @@ import (
 type log struct {
 	Id int64 `json: "id" xorm:pk`
 	Password string `json: "password" xorm:varchar(64)`
-	CreatedAt time.Time `xorm:"created"`
+	CreatedAt time.Time `xorm:"created" json:"-"`
 }
 
 type user struct {
@@ -88,7 +88,7 @@ func sqlConnectKeepAlife(){
 }
 
 func myLog(str string)  {
-	fmt.Printf("[%v] %v", time.Now().String(), str)
+	fmt.Printf("[log][%v] %v\n", time.Now().String()[:19], str)
 }
 
 func idExist(id int64) bool{
@@ -103,7 +103,7 @@ func idExist(id int64) bool{
 var (
 	OK = "ok"
 	ServerError = "serverError"
-	TypeError = "typeError"
+	FormatError = "formatError"
 	SkeyFail = "skeyFail"
 	NotExist = "notExist"
 	WrongLoginInfo = "wrongLoginInfo"
@@ -123,7 +123,7 @@ func quickResp(cmd string, c *gin.Context){
 			"msg": "server error",
 			"retc": -1,
 		})
-	} else if cmd == TypeError{
+	} else if cmd == FormatError{
 		c.JSON(400, gin.H{
 			"msg": "format error",
 			"retc": -4,
@@ -159,7 +159,7 @@ func readStringFile(path string) []byte {
 	t, _ := ioutil.ReadAll(f)
 	f.Close()
 	if err != nil {
-		myLog(fmt.Sprintf("ERROR when openning %v \n", path))
+		myLog(fmt.Sprintf("ERROR when openning %v", path))
 	}
 	return t
 }
@@ -187,8 +187,12 @@ func postUser(c *gin.Context)  {
 		}
 		return
 	}
-
-	if json.Unmarshal(d, newUser) == nil {
+	err := json.Unmarshal(d, newUser)
+	if err == nil {
+		if newUser.Id == 0 || newUser.Password == ""{
+			quickResp(FormatError, c)
+			return
+		}
 		myLog(fmt.Sprintf("POST /user\n%v\n", string(d)))
 		has, _ := Sql.Id(newUser.Id).Get(new(log))
 
@@ -211,7 +215,11 @@ func postUser(c *gin.Context)  {
 			fmt.Print("ERROR:\n%v\n", err)
 			quickResp(ServerError, c)
 		}
-	} else {quickResp("typeError", c)}
+	} else {
+		myLog("Json error")
+		myLog(fmt.Sprintf("%v", err))
+		quickResp(FormatError, c)
+	}
 }
 
 func postLogin(c *gin.Context)  {

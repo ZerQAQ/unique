@@ -82,7 +82,7 @@ skey是纯数字 长度在40以内
 ### POST /user 
 新建用户
 ```
-{"id": [string100], "password" [string64]}
+{"id": [int64], "password" [string64]}
 ```
 ```
 {}
@@ -91,7 +91,7 @@ skey是纯数字 长度在40以内
 ### POST /login 
 登录
 ```
-{"id": [string100], "password": [string64], "skeyLifeTime": [int64]}
+{"id": [int64], "password": [string64], "skeyLifeTime": [int64]}
 
 skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即永远不失效
 ```
@@ -113,7 +113,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 
 ```
 ```
-{"nick": [string100], eemotionNum: int64}
+{"nick": [string100], emotionNum: [int64]}
 ```
 
 ### POST /user?skey=&type=modify 
@@ -131,21 +131,14 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ### POST /emotion?skey=
 ```
 {
-	"id": int64,
-	"timeUnix": int64,
-	"stars": int64,
-	"type": int64,
-	"content": int64,
-	"photoNum": int64
+	"id": [int64],
+	"timeUnix": [int64],
+	"stars": [int64],
+	"type": [int64],
+	"content": [int64],
+	"text": string[2000], emotion的文字内容 2000字以内
+	"photoNum": [int64],
 }
-```
-```
-```
-
-### POST /src/text/:id 
-emotionid为:id的文字
-```
-字符串 不用json格式
 ```
 ```
 ```

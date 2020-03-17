@@ -74,7 +74,8 @@ Accept: application/json
 ```cassandraql
 {
   "data": {
-    "content": "我们曾如此渴望命运的波澜,\n到最后才发现,\n人生最曼妙的风景,\n竟是内心的淡定与从容.\n我们曾如此期待他人的认同,\n到最后才知道,\n世界是自己的,\n与他人毫无关系.\n--杨绛"
+    "author": "惠特曼",
+    "content": "做一个世界的水手,\n游遍每一个港口.\n"
   },
   "msg": "ok",
   "retc": 1
