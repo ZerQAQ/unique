@@ -30,21 +30,13 @@
 
 	brief[string20]
 
-	tid[int64]
+	text[string2000]
+
+	accept[string2000]
 
 	photoNum[int64] 0~9 照片数量
 
 	createdAt[int64]
-
-### TABLE emotionText:
-
-	id[int64](pk)
-
-	uid[int64]
-
-	text[string2000]
-
-	accept[string2000]
 
 ## DIR
 
@@ -206,7 +198,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 {text: string[2000]}
 ```
 
-### GET /src/photo/:id/:num&skey
+### GET /src/photo/:id/:num&skey=
 
 获取id为:id的心情的第:num张照片(从1开始计数)
 ```
