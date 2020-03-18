@@ -36,10 +36,16 @@ type emotion struct {
 	CreatedAt time.Time `json:"createdAt" xorm:"created"`
 }
 
+type uploadStatus struct {
+	Voice int64
+	Photo [10]int64
+}
+
 var Router *gin.Engine
 var Sql *xorm.Engine
 var Sessions = make(map[string]int64)
 var SessionsLifetime = make(map[string]int64)
+
 
 func myRand() string { return strconv.Itoa(rand.Int()) }
 
@@ -187,8 +193,11 @@ func postUser(c *gin.Context)  {
 		}
 		return
 	}
-	err := json.Unmarshal(d, newUser)
+	var dicd map[string]interface{}
+	err := json.Unmarshal(d, &dicd)
 	if err == nil {
+		newUser.Id = int64(dicd["id"].(float64))
+		newUser.Password = dicd["password"].(string)
 		if newUser.Id == 0 || newUser.Password == ""{
 			quickResp(FormatError, c)
 			return
@@ -196,7 +205,7 @@ func postUser(c *gin.Context)  {
 		myLog(fmt.Sprintf("POST /user\n%v\n", string(d)))
 		has, _ := Sql.Id(newUser.Id).Get(new(log))
 
-		fmt.Printf("has:%v", has)
+		//fmt.Printf("has:%v", has)
 
 		if has { //ID存在
 
@@ -208,7 +217,7 @@ func postUser(c *gin.Context)  {
 		}
 
 		Sql.Insert(newUser)
-		_, err := Sql.Insert(user{Id: newUser.Id})
+		_, err := Sql.Insert(user{Id: newUser.Id, Nick: dicd["nick"].(string)})
 		if err == nil{ //ok
 			quickResp(OK, c)
 		} else { //服务器错误
@@ -279,8 +288,11 @@ func getUser(c *gin.Context)  {
 	}
 }
 
+func postEmotion(c *gin.Context){
+	
+}
+
 func getMotto(c *gin.Context)  {
-	fmt.Printf("getmotto\n")
 	k := rand.Int63() % MottosLen
 	fullResp(c, &gin.H{
 		"content": Mottos[k][0],

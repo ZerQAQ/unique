@@ -82,7 +82,7 @@ skey是纯数字 长度在40以内
 ### POST /user 
 新建用户
 ```
-{"id": [int64], "password" [string64]}
+{"id": [int64], "password" [string64], "nick" [string100]}
 ```
 ```
 {}
@@ -131,8 +131,6 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ### POST /emotion?skey=
 ```
 {
-	"id": [int64],
-	"timeUnix": [int64],
 	"stars": [int64],
 	"type": [int64],
 	"content": [int64],
@@ -195,6 +193,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 	"type": int64,
 	"content": int64,
 	"photoNum": int64,
+	"brief": string[20], (心情文字的前20个字)
 	"createdAt": int64 (Unix时间戳 创建时间)
 }
 ```
