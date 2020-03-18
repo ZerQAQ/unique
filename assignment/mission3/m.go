@@ -357,14 +357,23 @@ func uploadOK(s uploadStatus) int64 {
 }
 
 func postSrcVoice_Id(c *gin.Context)  {
-	id, _ := strconv.Atoi(c.Param("id"))
-	ul, has := Uploading[id]
+	skey := c.DefaultQuery("skey", "null")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail)
+		return
+	}
+	uid := checkSession(skey)
+	eidr, _ := (strconv.Atoi(c.Param("id"))
+	eid := int64(eidr)
+	ul, has := Uploading[eid]
 	if !has {
 		quickResp(NotUploading, c)
 	} else if ul.Voice == 1 {
 		quickResp(OK, c)
 	} else{
-
+		f, _ := c.FormFile("file")
+		path := fmt.Sprintf("src/%d/%d/voice", )
+		c.SaveUploadedFile(f, )
 	}
 }
 

@@ -42,7 +42,9 @@
 
 	uid[int64]
 
-	content:[string2000]
+	text[string2000]
+
+	accept[string2000]
 
 ## DIR
 
@@ -197,7 +199,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 }
 ```
 
-### GET /src/text/:id&skey= 
+### GET /src/text/:id&skey=&filetype=
 获取id为:id的心情文字
 ```
 ```
@@ -205,7 +207,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 字符串
 ```
 
-### GET /src/photo/:id/:num&skey=
+### GET /src/photo/:id/:num&skey=&filetype=
 
 获取id为:id的心情的第:num张照片(从1开始计数)
 ```
