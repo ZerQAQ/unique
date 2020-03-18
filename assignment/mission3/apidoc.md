@@ -20,13 +20,13 @@
 
 	id[int64](pk) 心情id
 	
-	uid[int64](pk) 用户id
+	uid[int64] 用户id
 
 	stars[int64] 星星数量 1~5
 
 	type[int64] 心情类型 0:好心情 1:坏心情
 
-	content[int64] 0~15 是否有文字照片和语音和悦纳，分别用第0~2二进制位表示,例如只有照片和文字且已经悦纳的心情的content是1011，即11
+	content[int64] 0~3 是否有语音和悦纳，分别用第0~1二进制位表示,例如有只语音的心情的content是01，即1
 
 	brief[string20]
 
@@ -41,8 +41,6 @@
 	id[int64](pk)
 
 	uid[int64]
-
-	eid[int64]
 
 	content:[string2000]
 
@@ -72,6 +70,7 @@ retc说明：
 - -2 资源不存在/用户ID已存在
 - -3 权限不足（skey错误或失效）/用户名或密码错误
 - -4 数据格式错误 (不是合法的json)
+- -5 在未上传emotion信息前上传了emotion语音或照片
 
 下面的API下第一个代码段是请求体格式，第二个是回复体中data字段格式，除了POST/login外，POST/login返回的skey字段是没有data包裹的。
 
@@ -141,7 +140,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
-### POST /src/voice/:id 
+### POST /src/voice/:id?skey=
 emotionid为:id的语音
 ```
 二进制文件
@@ -149,7 +148,7 @@ emotionid为:id的语音
 ```
 ```
 
-### POST /src/voice/:id/:num 
+### POST /src/voice/:id/:num?skey=
 emotionid为:id的第num张图片
 ```
 二进制文件

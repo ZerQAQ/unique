@@ -28,12 +28,20 @@ type user struct {
 
 type emotion struct {
 	Id      int64 `json:"id" xorm:pk`
-	Uid     int64 `json:"uid" xorm:pk`
+	Uid     int64 `json:"uid"`
+	Tid 	int64 `json:"-"'`
 	Stars   int64 `json:"stars"`
 	Type int64 `json:"type"`
+	Brief string `json:"brief" xorm:varchar(100)`
 	Content int64 `json:"content"`
 	PhotoNum int64 `json:"photoNum"`
 	CreatedAt time.Time `json:"createdAt" xorm:"created"`
+}
+
+type emotionText struct {
+	Id int64 `json:"id"`
+	Uid int64 `json:"uid"`
+	Content string `json:"content" xorm:"varchar(2000)"`
 }
 
 type uploadStatus struct {
@@ -45,6 +53,7 @@ var Router *gin.Engine
 var Sql *xorm.Engine
 var Sessions = make(map[string]int64)
 var SessionsLifetime = make(map[string]int64)
+var Uploading = make(map[int64]uploadStatus)
 
 
 func myRand() string { return strconv.Itoa(rand.Int()) }
@@ -113,6 +122,7 @@ var (
 	SkeyFail = "skeyFail"
 	NotExist = "notExist"
 	WrongLoginInfo = "wrongLoginInfo"
+	NotUploading = "notUploading"
 
 	Mottos [][]string
 	MottosLen int64
@@ -148,6 +158,11 @@ func quickResp(cmd string, c *gin.Context){
 		c.JSON(403, gin.H{
 			"msg": "wrong login info",
 			"retc": -3,
+		})
+	} else if cmd == NotUploading{
+		c.JSON(403, gin.H{
+			"msg": "please POST emotion first",
+			"retc": -5,
 		})
 	}
 }
@@ -289,7 +304,68 @@ func getUser(c *gin.Context)  {
 }
 
 func postEmotion(c *gin.Context){
-	
+	skey := c.DefaultQuery("skey", "null")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	} else {
+		uid := checkSession(skey)
+		d, _ := ioutil.ReadAll(c.Request.Body)
+		var dicd map[string]interface{}
+		var newEmotion emotion
+		json.Unmarshal(d, dicd)
+		json.Unmarshal(d, newEmotion)
+
+		text := dicd["text"].(string)
+		content := int64(dicd["content"].(float64))
+		if len(text) > 20 {
+			newEmotion.Brief = text[:20]
+		} else {
+			newEmotion.Brief = text
+		}
+		var newEmotionText emotionText
+		newEmotionText.Content = text
+		newEmotionText.Uid = uid
+		Sql.Insert(newEmotionText)
+
+		newEmotion.Tid = newEmotionText.Id
+		newEmotion.Uid = uid
+		Sql.Insert(newEmotion)
+
+
+		if newEmotion.PhotoNum > 0 || content & 1 == 1 {
+			var ul uploadStatus
+			if newEmotion.PhotoNum > 0 {
+				for i := 1; i <= int(newEmotion.PhotoNum); i++ {
+					ul.Photo[i] = int64(i)
+				}
+			}
+			if content & 1 == 0 {
+				ul.Voice = 1
+			}
+			Uploading[newEmotion.Id] = ul
+		}
+
+	}
+}
+
+func uploadOK(s uploadStatus) int64 {
+	for i := 1; i <= 9; i++{
+		if s.Photo[i] != 0 { return 0 }
+	}
+	if s.Voice == 1 { return 1 }
+}
+
+func postSrcVoice_Id(c *gin.Context)  {
+	id, _ := strconv.Atoi(c.Param("id"))
+	ul, has := Uploading[id]
+	if !has {
+		quickResp(NotUploading, c)
+	} else if ul.Voice == 1 {
+		quickResp(OK, c)
+	} else{
+
+	}
 }
 
 func getMotto(c *gin.Context)  {
@@ -328,6 +404,7 @@ func main() {
 	Sql.Sync2(new(user))
 	Sql.Sync2(new(log))
 	Sql.Sync2(new(emotion))
+	Sql.Sync2(new(emotionText))
 	Router = gin.Default()
 	Router.Use(Cors())
 	r := Router.Group("/kuro")
