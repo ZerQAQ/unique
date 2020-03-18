@@ -142,7 +142,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
-### POST /src/voice/:id?skey=
+### POST /src/voice/:id?skey=&filetype=
 emotionid为:id的语音
 ```
 二进制文件
@@ -150,7 +150,7 @@ emotionid为:id的语音
 ```
 ```
 
-### POST /src/voice/:id/:num?skey=
+### POST /src/voice/:id/:num?skey=&filetype=
 emotionid为:id的第num张图片
 ```
 二进制文件
@@ -186,8 +186,7 @@ rank:
 	$emotionList
 }
 
-$emotionList 是长度为num的emotion列表，emotion的格式为：
-
+$emotionList 是长度为num的emotion数组，emotion的格式为：
 {
 	"id": int64,
 	"stars": int64,
@@ -199,15 +198,15 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 }
 ```
 
-### GET /src/text/:id&skey=&filetype=
+### GET /src/text/:id&skey=
 获取id为:id的心情文字
 ```
 ```
 ```
-字符串
+{text: string[2000]}
 ```
 
-### GET /src/photo/:id/:num&skey=&filetype=
+### GET /src/photo/:id/:num&skey
 
 获取id为:id的心情的第:num张照片(从1开始计数)
 ```
@@ -230,7 +229,7 @@ $emotionList 是长度为num的emotion列表，emotion的格式为：
 ```
 ```
 ```
-字符串
+{accept: string[2000]}
 ```
 
 ### POST /emotion/:id?skey=&type=modify 
