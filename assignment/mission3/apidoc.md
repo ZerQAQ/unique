@@ -72,16 +72,16 @@ password字段是SHA256加密后的十六进制字符串 字母小写(测试的�
 
 skey是纯数字 长度在40以内
 
-### POST /user 
+### POST /user √
 新建用户
 ```
-{"id": [int64], "password" [string64], "nick" [string100]}
+{"id": [int64], "password" [string64], "nick" [string100], "growthPoint": [int64]}
 ```
 ```
 {}
 ```
 
-### POST /login 
+### POST /login √
 登录
 ```
 {"id": [int64], "password": [string64], "skeyLifeTime": [int64]}
@@ -92,7 +92,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 {"skey": [string]}
 ```
 
-### POST /logout?skey=
+### POST /logout?skey= √
 退出登录
 ```
 ```
@@ -100,16 +100,30 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 {}
 ```
 
-### GET /user?skey= 
+### GET /user?skey= √
 返回用户信息
 ```
 
 ```
 ```
-{"nick": [string100], emotionNum: [int64]}
+{"nick": [string100], "emotionNum": [int64]}
 ```
 
-### POST /user?skey=&type=modify 
+### GET /user/photo?skey= 获取id为uid的用户头像
+```
+```
+```
+二进制文件
+```
+
+### POST /user/photo?skey= 上传头像
+```
+二进制文件
+```
+```
+```
+
+### POST /user?skey=&type=modify √
 修改用户昵称
 ```
 {"nick": [string100]}
@@ -117,15 +131,13 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
-下面四类请求要连着发，全部发完了才算创建成功
-
 考虑到包不一定具有时序性，建议发送完emotion包之后先sleep(0.1)
 
 否则在emotion包到达前，语音和图片包都会被丢弃
 
 全部发送成功之后返回的包里的retc字段是2
 
-### POST /emotion?skey=
+### POST /emotion?skey= 
 ```
 {
 	"stars": [int64],
@@ -138,7 +150,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
-### POST /src/voice/:id?skey=&filetype=
+### POST /src/voice/:id?skey=&filetype= 
 emotionid为:id的语音
 ```
 二进制文件
@@ -146,13 +158,13 @@ emotionid为:id的语音
 ```
 ```
 
-### POST /src/voice/:id/:num?skey=&filetype=
+### POST /src/voice/:id/:num?skey=&filetype= 
 emotionid为:id的第num张图片
 ```
 二进制文件
 ```
 ```
-{notload: int64[]} notload里面存着还未上传的照片，是1~photoNum的正整数
+{notload: int64[], url: string} notload里面存着还未上传的照片，是1~photoNum的正整数
 ```
 
 ### GET /emotion?skey=&type=&content=&page=&rank=&search=&full=
@@ -179,7 +191,7 @@ rank:
 
 ```
 ```
-```
+``` 
 返回：
 {
 	"page": int64, 页序号
@@ -228,14 +240,6 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 }
 ```
 
-### GET /src/text/:id&skey=
-获取id为:id的心情文字
-```
-```
-```
-{text: string[2000]}
-```
-
 ### GET /src/photo/:id/:num&skey=
 
 获取id为:id的心情的第:num张照片(从1开始计数)
@@ -263,7 +267,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 {}
 ```
 
-### POST /emotion/:id?skey=&type=delete 
+### POST /emotion/:id?skey=&type=delete
 粉碎id为:id的心情
 ```
 ```
@@ -271,7 +275,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 {}
 ```
 
-### GET /src/motto 
+### GET /src/motto √
 随机获得一段格言
 ```
 ```

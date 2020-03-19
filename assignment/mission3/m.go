@@ -24,6 +24,7 @@ type user struct {
 	Id int64 `json:"id" xorm:pk`
 	Nick string `json:"nick" xorm:varchar(100)`
 	EmotionNum int64 `json:"emotionNum"`
+	GrowthPoint int64 `json:"growthPoint"`
 }
 
 type emotion struct {
@@ -316,6 +317,17 @@ func getUser(c *gin.Context)  {
 	}
 }
 
+func GetUserPhoto(c *gin.Context) {
+	skey := c.DefaultQuery("skey", "null")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	}
+	uid := checkSession(skey)
+	path := fmt.Sprintf("src/%v/head", uid)
+	_, err := os.Stat(path)
+}
+
 func postEmotion(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
 	if skey == "null" || checkSession(skey) == -1 {
@@ -350,6 +362,10 @@ func postEmotion(c *gin.Context){
 
 		if err != nil {
 			quickResp(ServerError, c)
+		}
+
+		if newEmotion.Type == 0 {
+			addGrowth(uid, 3)
 		}
 
 		if newEmotion.PhotoNum > 0 || content & 1 == 1 {
@@ -480,8 +496,17 @@ func postSrcPhoto_Id_Num(c *gin.Context){
 		}
 		fullResp(c, gin.H{
 			"notLoad": notload,
+			"url": fmt.Sprintf("src/photo/%v/%v", eid, num),
 		})
 	}
+}
+
+func addGrowth(uid int64, v int64) {
+	var u user
+	u.Id = uid
+	Sql.Get(&u)
+	u.GrowthPoint += v
+	Sql.Id(uid).Update(u)
 }
 
 func postEmotion_Id(c *gin.Context){
@@ -511,6 +536,7 @@ func postEmotion_Id(c *gin.Context){
 
 	if tp == "delete" {
 		_, err1 := Sql.Delete(emotion{Id: eid})
+		addGrowth(uid, 1)
 
 		path := fmt.Sprintf("src/%v/%v", uid, eid)
 		err2 := os.RemoveAll(path)
@@ -524,7 +550,7 @@ func postEmotion_Id(c *gin.Context){
 		var acEmotion emotion
 		acEmotion.Id = eid
 		acEmotion.Uid = uid
-
+		addGrowth(uid, 3)
 		Sql.Get(&acEmotion)
 
 		fmt.Print(acEmotion)
