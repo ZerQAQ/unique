@@ -27,26 +27,23 @@ type user struct {
 }
 
 type emotion struct {
-	Id      int64 `json:"id" xorm:pk`
+	Id      int64 `json:"id"`
 	Uid     int64 `json:"uid"`
-	Tid 	int64 `json:"-"'`
 	Stars   int64 `json:"stars"`
 	Type int64 `json:"type"`
 	Brief string `json:"brief" xorm:varchar(100)`
 	Content int64 `json:"content"`
 	PhotoNum int64 `json:"photoNum"`
+	Accept string `json:"-" xorm:varchar(2000)`
+	Text string `json:"-" xorm:varchar(2000)`
 	CreatedAt time.Time `json:"createdAt" xorm:"created"`
 }
 
-type emotionText struct {
-	Id int64 `json:"id"`
-	Uid int64 `json:"uid"`
-	Content string `json:"content" xorm:"varchar(2000)"`
-}
-
 type uploadStatus struct {
+	Id int64
 	Voice int64
 	Photo [10]int64
+	PhotoNum int64
 }
 
 var Router *gin.Engine
@@ -124,6 +121,7 @@ var (
 	WrongLoginInfo = "wrongLoginInfo"
 	NotUploading = "notUploading"
 	UploadSuccess = "uploadSuccess"
+	NotBadEmotion = "notBadEmotion"
 
 	Mottos [][]string
 	MottosLen int64
@@ -169,6 +167,11 @@ func quickResp(cmd string, c *gin.Context){
 		c.JSON(200, gin.H{
 			"msg": "upload success",
 			"retc": 2,
+		})
+	} else if cmd == NotUploading{
+		c.JSON(403, gin.H{
+			"msg": "not bad emotion",
+			"retc": -5,
 		})
 	}
 }
@@ -321,10 +324,16 @@ func postEmotion(c *gin.Context){
 	} else {
 		uid := checkSession(skey)
 		d, _ := ioutil.ReadAll(c.Request.Body)
+
+		myLog(fmt.Sprintf("body:\n%v\n", string(d)))
+
+
 		var dicd map[string]interface{}
 		var newEmotion emotion
-		json.Unmarshal(d, dicd)
-		json.Unmarshal(d, newEmotion)
+		json.Unmarshal(d, &dicd)
+		json.Unmarshal(d, &newEmotion)
+
+		fmt.Printf("dicd:\n%v\n", dicd)
 
 		text := dicd["text"].(string)
 		content := int64(dicd["content"].(float64))
@@ -333,21 +342,19 @@ func postEmotion(c *gin.Context){
 		} else {
 			newEmotion.Brief = text
 		}
-		var newEmotionText emotionText
-		newEmotionText.Content = text
-		newEmotionText.Uid = uid
-		_, err1 := Sql.Insert(newEmotionText)
-
-		newEmotion.Tid = newEmotionText.Id
+		newEmotion.Text = text
 		newEmotion.Uid = uid
-		_, err2 := Sql.Insert(newEmotion)
+		newEmotion.Id = 0
+		fmt.Printf("emo:\n%v", newEmotion)
+		_, err := Sql.Insert(&newEmotion)
 
-		if err1 != nil || err2 != nil {
+		if err != nil {
 			quickResp(ServerError, c)
 		}
 
 		if newEmotion.PhotoNum > 0 || content & 1 == 1 {
 			var ul uploadStatus
+			ul.PhotoNum = newEmotion.PhotoNum
 			if newEmotion.PhotoNum > 0 {
 				for i := 1; i <= int(newEmotion.PhotoNum); i++ {
 					ul.Photo[i] = int64(i)
@@ -356,14 +363,15 @@ func postEmotion(c *gin.Context){
 			if content & 1 == 0 {
 				ul.Voice = 1
 			}
+			ul.Id = newEmotion.Id
 			Uploading[newEmotion.Id] = ul
 		}
 
-		eid := newEmotion.Id
-
 		fullResp(c, gin.H{
-			"id": eid,
+			"id": newEmotion.Id,
 		})
+
+
 	}
 }
 
@@ -371,7 +379,7 @@ func uploadOK(s uploadStatus) int64 {
 	for i := 1; i <= 9; i++{
 		if s.Photo[i] != 0 { return 0 }
 	}
-	if s.Voice == 1 { return 1 } else { return 0 }
+	if s.Voice == 1 { delete(Uploading, s.Id); return 1 } else { return 0 }
 }
 
 func postSrcVoice_Id(c *gin.Context)  {
@@ -395,17 +403,29 @@ func postSrcVoice_Id(c *gin.Context)  {
 		quickResp(OK, c)
 	} else{
 		f, _ := c.FormFile("file")
+		if f == nil {
+			quickResp(FormatError, c)
+			return
+		}
+		dir := fmt.Sprintf("src/%v/%v", uid, eid)
+		os.MkdirAll(dir, os.ModePerm)
 		path := fmt.Sprintf("src/%d/%d/voice.%v", uid, eid, filetype)
-		c.SaveUploadedFile(f, path)
+		err := c.SaveUploadedFile(f, path)
+		if err != nil {
+			quickResp(ServerError, c)
+			return
+		}
+		ul.Voice = 1
 		if uploadOK(ul) == 1 {
 			quickResp(UploadSuccess, c)
 		} else {
+			Uploading[ul.Id] = ul
 			quickResp(OK, c)
 		}
 	}
 }
-/*
-func postSrcPhoto_Id(c *gin.Context){
+
+func postSrcPhoto_Id_Num(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
 	filetype := c.DefaultQuery("filetype", "null")
 	if skey == "null" || checkSession(skey) == -1 {
@@ -418,12 +438,120 @@ func postSrcPhoto_Id(c *gin.Context){
 	}
 	uid := checkSession(skey)
 	eidr, _ := strconv.Atoi(c.Param("id"))
+	numr, _ := strconv.Atoi(c.Param("num"))
 	eid := int64(eidr)
+	num := int64(numr)
+	ul, has := Uploading[eid]
 
+	if !has {
+		quickResp(NotUploading, c)
+		return
+	}
+	if num > ul.PhotoNum {
+		quickResp(FormatError, c)
+		return
+	}
+
+	f, _ := c.FormFile("file")
+	if f == nil {
+		quickResp(FormatError, c)
+		return
+	}
+	dir := fmt.Sprintf("src/%d/%d/photo", uid, eid)
+	fmt.Printf("dir:\n%v\n", dir)
+	os.MkdirAll(dir, os.ModePerm)
+	path := fmt.Sprintf("src/%d/%d/photo/%d.%v", uid, eid, num, filetype)
+	err := c.SaveUploadedFile(f, path)
+	if err != nil {
+		quickResp(ServerError, c)
+		return
+	}
+	ul.Photo[num] = 0
+	if uploadOK(ul) == 1 {
+		quickResp(UploadSuccess, c)
+		return
+	} else {
+		Uploading[ul.Id] = ul
+		var notload []int64
+		for i := 1; i <= 9; i++ {
+			if ul.Photo[i] != 0 {
+				notload = append(notload, int64(i))
+			}
+		}
+		fullResp(c, gin.H{
+			"notLoad": notload,
+		})
+	}
 }
- */
 
+func postEmotion_Id(c *gin.Context){
+	skey := c.DefaultQuery("skey", "null")
+	tp := c.DefaultQuery("type", "null")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	}
+	eidr, _ := strconv.Atoi(c.Param("id"))
+	eid := int64(eidr)
+	uid := checkSession(skey)
 
+	has, _ := Sql.Get(&emotion{Id: eid})
+
+	if ! has {
+		quickResp(NotExist, c)
+		return
+	}
+
+	has, _ = Sql.Get(&emotion{Id: eid, Uid: uid})
+
+	if !has {
+		quickResp(SkeyFail, c)
+		return
+	}
+
+	if tp == "delete" {
+		_, err1 := Sql.Delete(emotion{Id: eid})
+
+		path := fmt.Sprintf("src/%v/%v", uid, eid)
+		err2 := os.RemoveAll(path)
+		if err1 != nil || err2 != nil {
+			quickResp(ServerError, c)
+			return
+		}
+		quickResp(OK, c)
+		return
+	} else if tp == "accept" {
+		var acEmotion emotion
+		acEmotion.Id = eid
+		acEmotion.Uid = uid
+
+		Sql.Get(&acEmotion)
+
+		fmt.Print(acEmotion)
+		fmt.Printf("\n%v\n",acEmotion)
+
+		if acEmotion.Type != 1 {
+			quickResp(NotBadEmotion, c)
+			return
+		}
+
+		d, _ := ioutil.ReadAll(c.Request.Body)
+		acText := string(d)
+
+		acEmotion.Accept = acText
+		acEmotion.Type = 0
+		acEmotion.Content |= 2
+
+		Sql.Id(acEmotion.Id).Update(&acEmotion)
+		Sql.Id(acEmotion.Id).Cols("type").Update(&acEmotion)
+
+		quickResp(OK, c)
+		return
+	} else {
+		quickResp(FormatError, c)
+		return
+	}
+}
 
 func getMotto(c *gin.Context)  {
 	k := rand.Int63() % MottosLen
@@ -461,7 +589,6 @@ func main() {
 	Sql.Sync2(new(user))
 	Sql.Sync2(new(log))
 	Sql.Sync2(new(emotion))
-	Sql.Sync2(new(emotionText))
 	Router = gin.Default()
 	Router.Use(Cors())
 	r := Router.Group("/kuro")
@@ -476,9 +603,14 @@ func main() {
 
 	r.Handle("POST", "/emotion", postEmotion)
 	r.Handle("POST", "/src/voice/:id", postSrcVoice_Id)
+	r.Handle("POST", "/src/photo/:id/:num", postSrcPhoto_Id_Num)
+	r.Handle("POST", "/emotion/:id", postEmotion_Id)
 
 	go maintainSeesion()
 	go sqlConnectKeepAlife()
+
+	Sessions["1"] = 2
+	SessionsLifetime["1"] = time.Now().Unix() * 2
 
 	Router.Run()
 }

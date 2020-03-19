@@ -64,7 +64,7 @@ retc说明：
 - -2 资源不存在/用户ID已存在
 - -3 权限不足（skey错误或失效）/用户名或密码错误
 - -4 数据格式错误 (不是合法的json)
-- -5 在未上传emotion信息前上传了emotion语音或照片
+- -5 在未上传emotion信息前上传了emotion语音或照片 / 悦纳的心情不是坏心情
 
 下面的API下第一个代码段是请求体格式，第二个是回复体中data字段格式，除了POST/login外，POST/login返回的skey字段是没有data包裹的。
 
@@ -119,6 +119,10 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 
 下面四类请求要连着发，全部发完了才算创建成功
 
+考虑到包不一定具有时序性，建议发送完emotion包之后先sleep(0.1)
+
+否则在emotion包到达前，语音和图片包都会被丢弃
+
 全部发送成功之后返回的包里的retc字段是2
 
 ### POST /emotion?skey=
@@ -148,9 +152,10 @@ emotionid为:id的第num张图片
 二进制文件
 ```
 ```
+{notload: int64[]} notload里面存着还未上传的照片，是1~photoNum的正整数
 ```
 
-### GET /emotion?skey=&type=&content=&page=&rank=&search=
+### GET /emotion?skey=&type=&content=&page=&rank=&search=&full=
 
 search
 	模糊搜索给定的字符串，默认是空字符串，代表不搜索
@@ -160,6 +165,10 @@ page:
 
 content、type:
 	获取特定content和type的emotion，content和type的说明见TABLE emotion
+
+full:
+	默认等于0
+	如果等于1，就返回完整的内容（text和accept）(文字内容和悦纳内容)
 
 rank:
 - 0 不排序
@@ -186,6 +195,35 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 	"content": int64,
 	"photoNum": int64,
 	"brief": string[20], (心情文字的前20个字)
+	"text": string[2000], full = 1 才有
+	"accept": string[2000], full = 1 才有
+	"createdAt": int64 (Unix时间戳 创建时间)
+}
+```
+
+### GET/emotion?skey=&id=
+
+获取id为id的emotion的完整信息
+
+我是这么想的 前端先获得emotionlist 然后根据里面的内容 可以知道想要那条id的具体内容 然后再通过这里获取完整内容
+
+这样就不用发emotionlist的时候就发完整的text和accept内容了，这两个内容应该是长度最大的
+
+当然emotionlist也有full字段 可以强制获取所有内容
+
+```
+```
+
+```
+{
+	"id": int64,
+	"stars": int64,
+	"type": int64,
+	"content": int64,
+	"photoNum": int64,
+	"brief": string[20], (心情文字的前20个字)
+	"text": string[2000],
+	"accept": string[2000],
 	"createdAt": int64 (Unix时间戳 创建时间)
 }
 ```
@@ -216,25 +254,17 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 二进制文件
 ```
 
-### GET /src/accept/:id&skey=
-获取id为:id的心情的悦纳内容
-```
-```
-```
-{accept: string[2000]}
-```
-
-### POST /emotion/:id?skey=&type=modify 
+### POST /emotion/:id?skey=&type=accept 
 悦纳id为:id的心情
 ```
-{"content": string} 悦纳的内容
+字符串
 ```
 ```
 {}
 ```
 
 ### POST /emotion/:id?skey=&type=delete 
-删除id为:id的心情
+粉碎id为:id的心情
 ```
 ```
 ```
