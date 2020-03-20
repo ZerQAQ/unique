@@ -129,7 +129,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 二进制文件
 ```
 
-### POST /user/photo?skey=&filetype= 上传头像
+### POST /user/photo?skey=&filetype= 上传头像 √
 ```
 二进制文件
 ```
@@ -150,7 +150,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 
 全部发送成功之后返回的包里的retc字段是2
 
-### POST /emotion?skey= 
+### POST /emotion?skey= √
 ```
 {
 	"stars": [int64],
@@ -163,7 +163,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
-### POST /emotion/:id?skey=&type=modify&key=stars
+### POST /emotion/:id?skey=&type=modify&key=stars √
 ```
 {
 	"stars": [int64]
@@ -173,7 +173,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 {}
 ```
 
-### POST /src/voice/:id?skey=&filetype= 
+### POST /src/voice/:id?skey=&filetype= √
 emotionid为:id的语音
 ```
 二进制文件
@@ -181,7 +181,7 @@ emotionid为:id的语音
 ```
 ```
 
-### POST /src/photo/:id/:num?skey=&filetype= 
+### POST /src/photo/:id/:num?skey=&filetype= √
 emotionid为:id的第num张图片
 ```
 二进制文件
@@ -281,7 +281,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 二进制文件
 ```
 
-### POST /emotion/:id?skey=&type=accept 
+### POST /emotion/:id?skey=&type=accept √
 悦纳id为:id的心情
 ```
 字符串
@@ -290,7 +290,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 {}
 ```
 
-### POST /emotion/:id?skey=&type=delete
+### POST /emotion/:id?skey=&type=delete √
 粉碎id为:id的心情
 ```
 ```
