@@ -49,6 +49,20 @@
 	- head.*
 - main.exe
 
+## CODE
+
+函数根据对应的URL命名，如果有可变字段，则在该字段前加_
+
+例:
+
+- POST user/photo 对应的函数是 postUserPhoto()
+
+- GET src/photo/:eid/:num 对应的函数是 getSrcPhoto_Eid_Num()
+
+全局变量首字母大写
+
+用mylog(string)打印日志
+
 ## API:
 
 根目录是/kuro
@@ -75,14 +89,9 @@ skey是纯数字 长度在40以内
 上传文件的格式：
 ```
 POST http://localhost:8080/src/photo/2/1?skey=&filetype=png
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="file"; filename="x"
-# name 一定要是"file" filename随意
+Content-Type: file
 
 二进制文件
---WebAppBoundary--
 ```
 
 ### POST /user √
@@ -119,14 +128,20 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 
 ```
 ```
-{"nick": [string100], "emotionNum": [int64]}
-```
-
-### GET /user/photo?skey= 获取id为uid的用户头像
-```
-```
-```
-二进制文件
+{
+  "data": {
+    "id": 113414123,
+    "nick": "",
+    "emotionNum": 0,
+    "goodmoodNum": 0,
+    "badmoodNum": 0,
+    "acceptmoodNum": 0,
+    "imageurl": "https://s1.ax1x.com/2020/03/20/8gHl79.jpg", //头像地址
+    "growthPoint": 0
+  },
+  "msg": "ok",
+  "retc": 1
+}
 ```
 
 ### POST /user/photo?skey=&filetype= 上传头像 √
