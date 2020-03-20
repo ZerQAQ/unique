@@ -190,7 +190,7 @@ emotionid为:id的第num张图片
 {notload: int64[], url: string} notload里面存着还未上传的照片，是1~photoNum的正整数
 ```
 
-### GET /emotion?skey=&type=&content=&page=&rank=&search=&full=
+### GET /emotions?skey=&type=&content=&page=&rank=&search=&full= √
 
 search
 	模糊搜索给定的字符串，默认是空字符串，代表不搜索
@@ -236,7 +236,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 }
 ```
 
-### GET/emotion?skey=&id=
+### GET/emotion/:id?skey= √
 
 获取id为id的emotion的完整信息
 
@@ -263,7 +263,34 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 }
 ```
 
-### GET /src/photo/:id/:num&skey=
+### GET/emotion/skey=&type=random&etype= √
+
+随机获取一条用户信息
+
+etype = 0 获取好心情
+
+etype = 1 获取坏心情
+
+```
+```
+
+```
+{
+	"id": int64,
+	"stars": int64,
+	"type": int64,
+	"content": int64,
+	"photoNum": int64,
+	"brief": string[20], (心情文字的前20个字)
+	"text": string[2000],
+	"accept": string[2000],
+	"createdAt": int64 (Unix时间戳 创建时间)
+}
+```
+
+
+
+### GET /src/photo/:id/:num&skey= √
 
 获取id为:id的心情的第:num张照片(从1开始计数)
 ```
@@ -272,7 +299,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 二进制文件
 ```
 
-### GET /src/voice/:id&skey= 
+### GET /src/voice/:id&skey= √
 
 获取id为:id的心情的语音
 ```
@@ -284,7 +311,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 ### POST /emotion/:id?skey=&type=accept √
 悦纳id为:id的心情
 ```
-字符串
+{"accept": string[2000]}
 ```
 ```
 {}

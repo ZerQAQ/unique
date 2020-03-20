@@ -17,13 +17,17 @@ import (
 type log struct {
 	Id int64 `json: "id" xorm:pk`
 	Password string `json: "password" xorm:varchar(64)`
-	CreatedAt time.Time `xorm:"created" json:"-"`
+	CreatedAt int64 `xorm:"created" json:"-"`
 }
 
 type user struct {
 	Id int64 `json:"id" xorm:pk`
 	Nick string `json:"nick" xorm:varchar(100)`
 	EmotionNum int64 `json:"emotionNum"`
+	GoodmoodNum int64 `json:"goodmoodNum"`
+	BadmoodNum int64 `json:"badmoodNum"`
+	AcceptMoodNum int64 `json:"acceptmoodNum"`
+	Imageurl string `json:"imageurl"`
 	GrowthPoint int64 `json:"growthPoint"`
 }
 
@@ -35,9 +39,9 @@ type emotion struct {
 	Brief string `json:"brief" xorm:varchar(100)`
 	Content int64 `json:"content"`
 	PhotoNum int64 `json:"photoNum"`
-	Accept string `json:"-" xorm:varchar(2000)`
-	Text string `json:"-" xorm:varchar(2000)`
-	CreatedAt time.Time `json:"createdAt" xorm:"created"`
+	Accept string `json:"accept" xorm:varchar(2000)`
+	Text string `json:"text" xorm:varchar(2000)`
+	CreatedAt int64 `json:"createdAt" xorm:"created"`
 }
 
 type uploadStatus struct {
@@ -169,7 +173,7 @@ func quickResp(cmd string, c *gin.Context){
 			"msg": "upload success",
 			"retc": 2,
 		})
-	} else if cmd == NotUploading{
+	} else if cmd == NotBadEmotion{
 		c.JSON(403, gin.H{
 			"msg": "not bad emotion",
 			"retc": -5,
@@ -233,7 +237,6 @@ func postUser(c *gin.Context)  {
 		//fmt.Printf("has:%v", has)
 
 		if has { //ID存在
-
 			c.JSON(403, gin.H{
 				"msg": "id has already exist",
 				"retc": -2,
@@ -241,11 +244,13 @@ func postUser(c *gin.Context)  {
 			return
 		}
 
-		Sql.Insert(newUser)
+		fmt.Printf("\n id: %v pd: %v \n", newUser.Id, newUser.Password)
+		i, errx := Sql.Insert(newUser)
+		fmt.Printf("\n i: %v errx: %v \n", i, errx)
 
 		var nick string
 		if dicd["nick"] == nil { nick = "" } else { nick = dicd["nick"].(string) }
-		_, err := Sql.Insert(user{Id: newUser.Id, Nick: nick})
+		_, err := Sql.Insert(user{Id: newUser.Id, Nick: nick, Imageurl:"https://s1.ax1x.com/2020/03/20/8gHl79.jpg"})
 
 		if err == nil{ //ok
 			quickResp(OK, c)
@@ -364,6 +369,19 @@ func postEmotion(c *gin.Context){
 		fmt.Printf("emo:\n%v", newEmotion)
 		_, err := Sql.Insert(&newEmotion)
 
+		var u user
+		u.Id = uid
+		Sql.Get(&u)
+		u.EmotionNum += 1
+
+		if newEmotion.Type == 0 {
+			u.GoodmoodNum += 1
+		} else {
+			u.BadmoodNum += 1
+		}
+
+		Sql.Id(uid).Update(&u)
+
 		if err != nil {
 			quickResp(ServerError, c)
 		}
@@ -429,7 +447,7 @@ func postSrcVoice_Id(c *gin.Context)  {
 		}
 		dir := fmt.Sprintf("src/%v/%v", uid, eid)
 		os.MkdirAll(dir, os.ModePerm)
-		path := fmt.Sprintf("src/%d/%d/voice.%v", uid, eid, filetype)
+		path := fmt.Sprintf("src/%d/%d/voice", uid, eid)
 		err := c.SaveUploadedFile(f, path)
 		if err != nil {
 			quickResp(ServerError, c)
@@ -480,7 +498,7 @@ func postSrcPhoto_Id_Num(c *gin.Context){
 	dir := fmt.Sprintf("src/%d/%d/photo", uid, eid)
 	fmt.Printf("dir:\n%v\n", dir)
 	os.MkdirAll(dir, os.ModePerm)
-	path := fmt.Sprintf("src/%d/%d/photo/%d.%v", uid, eid, num, filetype)
+	path := fmt.Sprintf("src/%d/%d/photo/%d", uid, eid, num)
 	err := c.SaveUploadedFile(f, path)
 	if err != nil {
 		quickResp(ServerError, c)
@@ -518,7 +536,7 @@ func postEmotion_Id(c *gin.Context){
 	tp := c.DefaultQuery("type", "null")
 	key := c.DefaultQuery("key", "null")
 
-	//fmt.Printf("\n t: %v k: %v \n", tp, key)
+	fmt.Printf("\n t: %v k: %v \n", tp, key)
 
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
@@ -561,7 +579,12 @@ func postEmotion_Id(c *gin.Context){
 		addGrowth(uid, 3)
 		Sql.Get(&acEmotion)
 
-		fmt.Print(acEmotion)
+		var u user
+		u.Id = uid
+		Sql.Get(&u)
+		u.AcceptMoodNum += 1
+		Sql.Id(u.Id).Update(u)
+
 		fmt.Printf("\n%v\n",acEmotion)
 
 		if acEmotion.Type != 1 {
@@ -569,8 +592,12 @@ func postEmotion_Id(c *gin.Context){
 			return
 		}
 
-		d, _ := ioutil.ReadAll(c.Request.Body)
-		acText := string(d)
+		dr, _ := ioutil.ReadAll(c.Request.Body)
+		var dicd map[string]interface{}
+		json.Unmarshal(dr, &dicd)
+		acText := dicd["accept"].(string)
+
+		fmt.Printf("\n%v\n", acText)
 
 		acEmotion.Accept = acText
 		acEmotion.Type = 0
@@ -618,7 +645,7 @@ func getMotto(c *gin.Context)  {
 
 func postUserPhoto(c *gin.Context)  {
 	skey := c.DefaultQuery("skey", "null")
-	filetype := c.DefaultQuery("filetype", "")
+	//filetype := c.DefaultQuery("filetype", "")
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
 		return
@@ -632,7 +659,7 @@ func postUserPhoto(c *gin.Context)  {
 		quickResp(FormatError, c)
 		return
 	}
-	path := dir + fmt.Sprintf("/head.%v", filetype)
+	path := dir + fmt.Sprintf("/head")
 	err := c.SaveUploadedFile(f, path)
 	if err != nil {
 		quickResp(ServerError, c)
@@ -660,6 +687,279 @@ func Cors() gin.HandlerFunc {
 	}
 }
 
+func getEmotion_Id(c *gin.Context) {
+	skey := c.DefaultQuery("skey", "null")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	}
+
+	eidr, _ := strconv.Atoi(c.Param("id"))
+	eid := int64(eidr)
+	uid := checkSession(skey)
+
+	var rEmotion emotion
+	rEmotion.Id = eid
+	rEmotion.Uid = uid
+
+	has, _ := Sql.Get(&rEmotion)
+
+	if !has {
+		quickResp(NotExist, c)
+		return
+	}
+
+	fullResp(c, rEmotion)
+}
+
+//GET /emotions?skey=&type=&content=&page=&rank=&search=&full=
+func getEmotions(c *gin.Context) {
+	/*skey := c.Query("skey")
+	uid := checkSession(skey)
+	if uid == -1 {
+		quickResp("SkeyFail", c)
+		return
+	}*/
+	dataSourceName := "root:123456@/test?charset=utf8"
+	Sql, err := xorm.NewEngine("mysql", dataSourceName)
+	uid := int64(951212)	//Debug
+	ty := c.DefaultQuery("type", "-1")	//-1表示忽略
+	content := c.DefaultQuery("content", "-1")
+	page := c.DefaultQuery("page", "1")	//Defult: p1
+	rank := c.DefaultQuery("rank", "0")	//0 no sort;1 time up;2 star up
+	search := c.DefaultQuery("search", "")	//""表示忽略
+	full := c.DefaultQuery("full", "0")	//0表示不反回text和accept，1表示全部返回
+
+	//填充sql语句: WHERE & ORDER
+	where0, where1, where2, where3 := "", "", "", ""
+	where0 = "uid=" + Itoa64(uid) + " "
+	switch ty {
+	case "0": where1 = "AND type=0 "
+	case "1": where1 = "AND type=1 "
+	default:
+		where1 = ""
+	}
+	if content != "-1" && content != "" {where2 = "AND content=" + content + " "}
+	if search != "" {where3 = "AND text LIKE '%" + search + "%'"}
+	order := " ORDER BY"
+	switch rank {
+	case "1": order += " created_at ASC"
+	case "-1": order += " created_at DESC"
+	case "2": order += " stars ASC"
+	case "-2": order += " stars DESC"
+	default:
+		order = ""
+	}
+	//分页
+	pageNum, _ := strconv.Atoi(page)
+	offset := 1
+	if pageNum > 0 { offset = (pageNum - 1) * 20 + 1}
+	limit := " LIMIT " + strconv.Itoa(offset) + "," + "20"
+
+	//组装sql
+	var sql string
+	if full == "0" {sql = "SELECT id,stars,type,content,photo_num,brief,created_at FROM emotion WHERE "} else {
+		sql = "SELECT id,stars,type,content,photo_num,brief,created_at,text,accept FROM emotion WHERE "
+	}
+	sql += where0 + where1 + where2 + where3 + order + limit + ";"
+
+	type emotionList struct {
+		Stars   int64 `json:"stars"`
+		Type int64 `json:"type"`
+		Brief string `json:"brief" xorm:varchar(100)`
+		Content int64 `json:"content"`
+		PhotoNum int64 `json:"photoNum"`
+		CreatedAt time.Time `json:"createdAt" xorm:"created"`
+	}
+	type emotionListAll struct {
+		Stars   int64 `json:"stars"`
+		Type int64 `json:"type"`
+		Brief string `json:"brief" xorm:varchar(100)`
+		Content int64 `json:"content"`
+		PhotoNum int64 `json:"photoNum"`
+		CreatedAt time.Time `json:"createdAt" xorm:"created"`
+		Text string `json:"text"`
+		Accept string `json:"accept"`
+	}
+
+	//根据full值响应相应的json
+	if full == "0" {
+		list := make([]emotionList, 0)
+		err := Sql.Sql(sql).Find(&list)
+		if err != nil {
+			quickResp(NotExist, c)
+			return
+		}
+		type results struct {
+			Page int64	`json:"page"`
+			Num int64 `json:"num"`
+			EmotionList []emotionList `json:"emotionList"`
+		}
+		if len(list) == 0 {pageNum = 1}
+		respStruct := results{
+			Page:        int64(pageNum),
+			Num:         int64(len(list)),
+			EmotionList: list,
+		}
+		c.JSON(http.StatusOK, respStruct)
+	} else {
+		list := make([]emotionListAll, 0)
+		err = Sql.Sql(sql).Find(&list)
+		if err != nil {
+			quickResp(NotExist, c)
+			return
+		}
+		type results struct {
+			Page int64	`json:"page"`
+			Num int64 `json:"num"`
+			EmotionList []emotionListAll `json:"emotionList"`
+		}
+		if len(list) == 0 {pageNum = 1}
+		respStruct := results{
+			Page:        int64(pageNum),
+			Num:         int64(len(list)),
+			EmotionList: list,
+		}
+		c.JSON(http.StatusOK, respStruct)
+	}
+	return
+}
+
+//GET /src/text/:id?skey=
+func getSrcText_Id(c *gin.Context) {
+	/*
+		skey := c.Query("skey")
+		uid := checkSession(skey)
+	*/
+	uid := int64(951212)
+	dataSourceName := "root:123456@/test?charset=utf8"
+	Sql, err := xorm.NewEngine("mysql", dataSourceName)
+	type emotionList struct {
+		Text string `json:"content" xorm:"varchar(2000)"`
+		Accept string `json:"content" xorm:"varchar(2000)"`
+	}
+	var results []string
+	err = Sql.Sql("SELECT text FROM emotion WHERE uid=?", uid).Find(&results)
+	if err != nil {
+		quickResp(NotExist, c)
+		return
+	}
+	c.String(http.StatusOK, results[0])
+}
+
+//GET /src/photo/:id/:nu
+func getSrcPhoto_Id_Nu(c *gin.Context) {
+	/*
+		skey := c.Query("skey")
+		uid := checkSession(skey)
+	*/
+	uid := int64(1)
+	id := c.Param("id")
+	num := c.Param("nu")
+
+	photoPath := "src/" + Itoa64(uid) + "/" + id + "/photo/" + num
+	photo, err := ioutil.ReadFile(photoPath)
+
+	if err != nil {
+		fmt.Printf("\nfail to reach photo: %s\nerr = %d", photoPath, err)
+		return
+	}
+	c.Data(http.StatusOK, "image", photo)
+}
+
+//GET /src/voice/:id?skey=
+func getSrcVoice_Id(c *gin.Context) {
+	/*
+		skey := c.Query("skey")
+		uid := checkSession(skey)
+	*/
+	uid := int64(1)
+	id := c.Param("id")
+
+	voicePath := "src/" + Itoa64(uid) + "/" + id + "/voice"
+	voice, err := ioutil.ReadFile(voicePath)
+
+	if err != nil {
+		fmt.Printf("\nfail to reach voice: %s\nerr = %d", voicePath, err)
+		return
+	}
+	c.Data(http.StatusOK, "audio", voice)
+}
+
+//GET /src/accept/:id?skey=
+func getSrcAccept_Id(c *gin.Context) {
+	/*
+		skey := c.Query("skey")
+		uid := checkSession(skey)
+	*/
+	uid := int64(951212)
+	id := c.DefaultQuery("id", "")
+	accept := ""
+	err := Sql.Select("accept").Where("uid=?", uid).And("id=?", id).Find(&accept)
+	if err != nil {
+		quickResp(NotExist, c)
+		return
+	}
+	c.String(http.StatusOK, accept)
+}
+
+//转换64位非负int的Itoa函数, 方法有点绕，待改
+func Itoa64(num int64) string {
+	if num == 0 {return "0"}
+	str := ""
+	for ;num > 0; {
+		str += strconv.Itoa(int(num % 10))
+		num /= 10
+	}
+	strune := []rune(str)
+	var ans string
+	for l := len(strune) - 1;l >= 0;l-- {
+		ans += string(strune[l])
+	}
+	return ans
+}
+
+func readBinaryFile(path string) ([]byte, error) {
+	t, err := ioutil.ReadFile(path)
+	if err != nil {
+		myLog(fmt.Sprintf("ERROR when openning %v \n", path))
+	}
+	return t, err
+}
+
+func getEmotion(c *gin.Context) {
+	skey := c.DefaultQuery("skey", "null")
+	tp := c.DefaultQuery("type", "null")
+	etpr, _ := strconv.Atoi(c.DefaultQuery("etype", "0"))
+	etp := int64(etpr)
+
+	fmt.Printf("\n s:%v t:%v \n", skey, tp)
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	}
+
+	uid := checkSession(skey)
+
+	if tp == "random" {
+		var u user
+		u.Id = uid
+		Sql.Get(&u)
+
+		var rEmotion emotion
+
+
+		has, _ := Sql.Where("uid = ? and type = ?", uid, etp).Limit(1, int(rand.Int63() % u.EmotionNum)).Get(&rEmotion)
+
+		if !has {
+			quickResp(NotExist, c)
+		}
+
+		fullResp(c, rEmotion)
+		return
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().Unix())
 	Sql, _ = xorm.NewEngine("mysql", "root:123456@/test?charset=utf8")
@@ -679,6 +979,14 @@ func main() {
 	r.Handle("POST", "/logout", postLogout)
 	r.Handle("GET", "/user", getUser)
 	r.Handle("GET", "/motto", getMotto)
+	r.Handle("GET", "/emotion/:id", getEmotion_Id)
+	r.Handle("GET", "/emotion", getEmotion)
+
+	r.GET("/emotions", getEmotions)
+	r.GET("/src/text/:id", getSrcText_Id)
+	r.GET("/src/photo/:id/:nu", getSrcPhoto_Id_Nu)
+	r.GET("/src/voice/:id", getSrcVoice_Id)
+	r.GET("/src/accept/:id", getSrcAccept_Id)
 
 	r.Handle("POST", "/emotion", postEmotion)
 	r.Handle("POST", "/src/voice/:id", postSrcVoice_Id)
