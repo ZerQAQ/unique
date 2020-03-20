@@ -44,9 +44,9 @@
 	- uid(int64)
 		- emotionid(int64)
 			- photo
-				- num(int64)
-			- voice
-			- accept
+				- num(int64).*
+			- voice.*
+	- head.*
 - main.exe
 
 ## API:
@@ -150,7 +150,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
-### POST /emotion/:id?skey=&type=modift&key=stars
+### POST /emotion/:id?skey=&type=modify&key=stars
 ```
 {
 	"stars": [int64]

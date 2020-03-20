@@ -517,6 +517,9 @@ func postEmotion_Id(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
 	tp := c.DefaultQuery("type", "null")
 	key := c.DefaultQuery("key", "null")
+
+	//fmt.Printf("\n t: %v k: %v \n", tp, key)
+
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
 		return
@@ -582,6 +585,7 @@ func postEmotion_Id(c *gin.Context){
 		dr, _ := ioutil.ReadAll(c.Request.Body)
 		var dicd map[string]interface{}
 		json.Unmarshal(dr, &dicd)
+		//fmt.Printf("\n%v\n", key)
 		if key == "stars" {
 			has, _ := Sql.Get(&emotion{Id: eid, Uid: uid})
 			if !has {
@@ -628,7 +632,7 @@ func postUserPhoto(c *gin.Context)  {
 		quickResp(FormatError, c)
 		return
 	}
-	path := dir + fmt.Sprintf("head.%v", filetype)
+	path := dir + fmt.Sprintf("/head.%v", filetype)
 	err := c.SaveUploadedFile(f, path)
 	if err != nil {
 		quickResp(ServerError, c)
@@ -680,6 +684,7 @@ func main() {
 	r.Handle("POST", "/src/voice/:id", postSrcVoice_Id)
 	r.Handle("POST", "/src/photo/:id/:num", postSrcPhoto_Id_Num)
 	r.Handle("POST", "/emotion/:id", postEmotion_Id)
+	r.Handle("POST", "/user/photo", postUserPhoto)
 
 	go maintainSeesion()
 	go sqlConnectKeepAlife()
