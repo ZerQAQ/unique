@@ -280,6 +280,7 @@ func postLogin(c *gin.Context)  {
 	ok, _ = Sql.Where("id = ? and password = ?", id, password).Get(new(log))
 	if ok {
 		skey := newSession(id, lifetime)
+		myLog(fmt.Sprintf("newskey: %v ", skey))
 		c.JSON(200, gin.H{
 			"msg": "ok",
 			"retc": 1,
@@ -346,15 +347,13 @@ func postEmotion(c *gin.Context){
 		uid := checkSession(skey)
 		d, _ := ioutil.ReadAll(c.Request.Body)
 
-		myLog(fmt.Sprintf("body:\n%v\n", string(d)))
+		myLog(fmt.Sprintf("body: %v", string(d)))
 
 
 		var dicd map[string]interface{}
 		var newEmotion emotion
 		json.Unmarshal(d, &dicd)
 		json.Unmarshal(d, &newEmotion)
-
-		fmt.Printf("dicd:\n%v\n", dicd)
 
 		text := dicd["text"].(string)
 		content := int64(dicd["content"].(float64))
@@ -403,6 +402,7 @@ func postEmotion(c *gin.Context){
 			}
 			ul.Id = newEmotion.Id
 			Uploading[newEmotion.Id] = ul
+			myLog(fmt.Sprintf("ul : %v", ul))
 		}
 
 		fullResp(c, gin.H{
@@ -423,6 +423,7 @@ func uploadOK(s uploadStatus) int64 {
 func postSrcVoice_Id(c *gin.Context)  {
 	skey := c.DefaultQuery("skey", "null")
 	filetype := c.DefaultQuery("filetype", "null")
+	myLog(fmt.Sprintf("voice skey : %v", skey))
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
 		return
@@ -466,6 +467,7 @@ func postSrcVoice_Id(c *gin.Context)  {
 func postSrcPhoto_Id_Num(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
 	filetype := c.DefaultQuery("filetype", "null")
+	myLog(fmt.Sprintf("photo skey: %v", skey))
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
 		return
@@ -933,6 +935,8 @@ func getEmotion(c *gin.Context) {
 	etpr, _ := strconv.Atoi(c.DefaultQuery("etype", "0"))
 	etp := int64(etpr)
 
+	myLog(fmt.Sprintf("random skey: %v", skey))
+
 	fmt.Printf("\n s:%v t:%v \n", skey, tp)
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
@@ -947,7 +951,6 @@ func getEmotion(c *gin.Context) {
 		Sql.Get(&u)
 
 		var rEmotion emotion
-
 
 		has, _ := Sql.Where("uid = ? and type = ?", uid, etp).Limit(1, int(rand.Int63() % u.EmotionNum)).Get(&rEmotion)
 

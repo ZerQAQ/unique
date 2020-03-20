@@ -263,7 +263,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 }
 ```
 
-### GET/emotion/skey=&type=random&etype= √
+### GET/emotion?skey=&type=random&etype= √
 
 随机获取一条用户信息
 
