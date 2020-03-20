@@ -101,7 +101,7 @@ func sqlConnectKeepAlife(){
 }
 
 func myLog(str string)  {
-	fmt.Printf("[log][%v] %v\n", time.Now().String()[:19], str)
+	fmt.Printf("[mylog][%v] %v\n", time.Now().String()[:19], str)
 }
 
 func idExist(id int64) bool{
@@ -227,7 +227,7 @@ func postUser(c *gin.Context)  {
 			quickResp(FormatError, c)
 			return
 		}
-		myLog(fmt.Sprintf("POST /user\n%v\n", string(d)))
+		myLog(fmt.Sprintf("POST /user %v", string(d)))
 		has, _ := Sql.Id(newUser.Id).Get(new(log))
 
 		//fmt.Printf("has:%v", has)
@@ -269,6 +269,8 @@ func postLogin(c *gin.Context)  {
 	id := int64(mapd["id"].(float64))
 	password := mapd["password"].(string)
 	lifetime := int64(mapd["skeyLifeTime"].(float64))
+
+	myLog(fmt.Sprintf("POST /login %v", string(d)))
 
 	ok, _ = Sql.Where("id = ? and password = ?", id, password).Get(new(log))
 	if ok {
@@ -317,6 +319,7 @@ func getUser(c *gin.Context)  {
 	}
 }
 
+/*
 func GetUserPhoto(c *gin.Context) {
 	skey := c.DefaultQuery("skey", "null")
 	if skey == "null" || checkSession(skey) == -1 {
@@ -327,6 +330,7 @@ func GetUserPhoto(c *gin.Context) {
 	path := fmt.Sprintf("src/%v/head", uid)
 	_, err := os.Stat(path)
 }
+ */
 
 func postEmotion(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
@@ -512,6 +516,7 @@ func addGrowth(uid int64, v int64) {
 func postEmotion_Id(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
 	tp := c.DefaultQuery("type", "null")
+	key := c.DefaultQuery("key", "null")
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
 		return
@@ -573,6 +578,25 @@ func postEmotion_Id(c *gin.Context){
 
 		quickResp(OK, c)
 		return
+	} else if tp == "modify" {
+		dr, _ := ioutil.ReadAll(c.Request.Body)
+		var dicd map[string]interface{}
+		json.Unmarshal(dr, &dicd)
+		if key == "stars" {
+			has, _ := Sql.Get(&emotion{Id: eid, Uid: uid})
+			if !has {
+				quickResp(NotExist, c)
+				return
+			}
+			_, err := Sql.Id(eid).Update(&emotion{Stars: int64(dicd["stars"].(float64))})
+			if err != nil {
+				quickResp(ServerError, c)
+				return
+			}
+			quickResp(OK, c)
+		} else {
+			quickResp(FormatError, c)
+		}
 	} else {
 		quickResp(FormatError, c)
 		return
@@ -586,6 +610,31 @@ func getMotto(c *gin.Context)  {
 		"author": Mottos[k][1],
 	})
 	fmt.Printf("ret\n")
+}
+
+func postUserPhoto(c *gin.Context)  {
+	skey := c.DefaultQuery("skey", "null")
+	filetype := c.DefaultQuery("filetype", "")
+	if skey == "null" || checkSession(skey) == -1 {
+		quickResp(SkeyFail, c)
+		return
+	}
+	uid := checkSession(skey)
+	dir := fmt.Sprintf("src/%v", uid)
+	os.MkdirAll(dir, os.ModePerm)
+
+	f, _ := c.FormFile("file")
+	if f == nil {
+		quickResp(FormatError, c)
+		return
+	}
+	path := dir + fmt.Sprintf("head.%v", filetype)
+	err := c.SaveUploadedFile(f, path)
+	if err != nil {
+		quickResp(ServerError, c)
+		return
+	}
+	quickResp(OK, c)
 }
 
 func Cors() gin.HandlerFunc {

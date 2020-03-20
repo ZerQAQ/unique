@@ -116,7 +116,7 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 二进制文件
 ```
 
-### POST /user/photo?skey= 上传头像
+### POST /user/photo?skey=&filetype= 上传头像
 ```
 二进制文件
 ```
@@ -150,6 +150,16 @@ skeyLifeTime是返回的skey的生命周期，单位秒，默认值是-1，即�
 ```
 ```
 
+### POST /emotion/:id?skey=&type=modift&key=stars
+```
+{
+	"stars": [int64]
+}
+```
+```
+{}
+```
+
 ### POST /src/voice/:id?skey=&filetype= 
 emotionid为:id的语音
 ```
@@ -158,10 +168,18 @@ emotionid为:id的语音
 ```
 ```
 
-### POST /src/voice/:id/:num?skey=&filetype= 
+### POST /src/photo/:id/:num?skey=&filetype= 
 emotionid为:id的第num张图片
 ```
+POST http://localhost:8080/src/photo/2/1?skey=&filetype=png
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="x"
+# name 一定要是file filename随意
+
 二进制文件
+--WebAppBoundary--
 ```
 ```
 {notload: int64[], url: string} notload里面存着还未上传的照片，是1~photoNum的正整数
