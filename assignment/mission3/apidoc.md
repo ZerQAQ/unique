@@ -72,6 +72,19 @@ password字段是SHA256加密后的十六进制字符串 字母小写(测试的�
 
 skey是纯数字 长度在40以内
 
+上传文件的格式：
+```
+POST http://localhost:8080/src/photo/2/1?skey=&filetype=png
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="x"
+# name 一定要是"file" filename随意
+
+二进制文件
+--WebAppBoundary--
+```
+
 ### POST /user √
 新建用户
 ```
@@ -171,15 +184,7 @@ emotionid为:id的语音
 ### POST /src/photo/:id/:num?skey=&filetype= 
 emotionid为:id的第num张图片
 ```
-POST http://localhost:8080/src/photo/2/1?skey=&filetype=png
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="file"; filename="x"
-# name 一定要是file filename随意
-
 二进制文件
---WebAppBoundary--
 ```
 ```
 {notload: int64[], url: string} notload里面存着还未上传的照片，是1~photoNum的正整数
