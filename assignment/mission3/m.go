@@ -481,7 +481,7 @@ func postSrcVoice_Id(c *gin.Context)  {
 func postSrcPhoto_Id_Num(c *gin.Context){
 	skey := c.DefaultQuery("skey", "null")
 	filetype := c.DefaultQuery("filetype", "null")
-	myLog(fmt.Sprintf("photo skey: %v", skey))
+	myLog(fmt.Sprintf("photo s: %v ft: %v", skey, filetype))
 	if skey == "null" || checkSession(skey) == -1 {
 		quickResp(SkeyFail, c)
 		return
@@ -501,16 +501,12 @@ func postSrcPhoto_Id_Num(c *gin.Context){
 		quickResp(NotUploading, c)
 		return
 	}
+	myLog(fmt.Sprintf("eid: %v pn: %v n: %v", eid, ul.PhotoNum, num))
 	if num > ul.PhotoNum {
 		quickResp(FormatError, c)
 		return
 	}
 
-	f, _ := c.FormFile("file")
-	if f == nil {
-		quickResp(FormatError, c)
-		return
-	}
 	dir := fmt.Sprintf("src/%d/%d/photo", uid, eid)
 	fmt.Printf("dir:\n%v\n", dir)
 	os.MkdirAll(dir, os.ModePerm)
@@ -672,6 +668,7 @@ func postUserPhoto(c *gin.Context)  {
 	dir := fmt.Sprintf("src/%v", uid)
 	path := dir + "/head." + filetype
 	os.MkdirAll(dir, os.ModePerm)
+	delFile(dir, "head")
 	os.Create(path)
 	d, _ := ioutil.ReadAll(c.Request.Body)
 	err := ioutil.WriteFile(path, d, 0666)
@@ -798,6 +795,7 @@ func main() {
 	r.Handle("POST", "/emotion/:id", postEmotion_Id)
 	r.Handle("POST", "/user/photo", postUserPhoto)
 
+	delFile("src/2", "head")
 	go maintainSeesion()
 	go sqlConnectKeepAlife()
 
@@ -884,11 +882,15 @@ func getEmotions(c *gin.Context) {
 		order = ""
 	}
 	//分页
-	pageNum, _ := strconv.Atoi(page)
-	if page == "" { pageNum = 1 }
-	offset := 1
-	if pageNum > 0 { offset = (pageNum - 1) * 20 + 1}
-	limit := " LIMIT " + strconv.Itoa(offset) + "," + "20"
+	limit := ""
+	pageNum := 0
+	if page != "0" {
+		pageNum, _ := strconv.Atoi(page)
+		if page == "" {pageNum = 1}
+		offset := 1
+		if pageNum > 0 { offset = (pageNum - 1) * 20 + 1}
+		limit = " LIMIT " + strconv.Itoa(offset) + "," + "20"
+	}
 
 	//组装sql
 	var sql string
@@ -898,6 +900,7 @@ func getEmotions(c *gin.Context) {
 	sql += where0 + where1 + where2 + where3 + order + limit + ";"
 
 	type emotionList struct {
+		Id      int64 `json:"id"`
 		Stars   int64 `json:"stars"`
 		Type int64 `json:"type"`
 		Brief string `json:"brief" xorm:varchar(100)`
@@ -906,6 +909,7 @@ func getEmotions(c *gin.Context) {
 		CreatedAt time.Time `json:"createdAt" xorm:"created"`
 	}
 	type emotionListAll struct {
+		Id      int64 `json:"id"`
 		Stars   int64 `json:"stars"`
 		Type int64 `json:"type"`
 		Brief string `json:"brief" xorm:varchar(100)`
@@ -1076,4 +1080,14 @@ func getUserPhoto(c *gin.Context) {
 		return
 	}
 	c.Data(http.StatusOK, "image", head)
+}
+
+func delFile(dir string, prefix string) bool {
+	fileName := matchFilePreffix(dir, prefix)
+	if fileName == "" {
+		return false
+	}
+	err := os.Remove(dir + fileName)
+	if err != nil {return false}
+	return true
 }

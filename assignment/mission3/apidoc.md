@@ -38,6 +38,8 @@
 
 	createdAt[int64]
 
+	stringCreatedAt[int64]
+
 ## DIR
 
 - src
@@ -248,6 +250,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 	"text": string[2000], full = 1 才有
 	"accept": string[2000], full = 1 才有
 	"createdAt": int64 (Unix时间戳 创建时间)
+	"stringCreatedAt" string (yyyy/mm/dd mm-ss)
 }
 ```
 
@@ -275,6 +278,7 @@ $emotionList 是长度为num的emotion数组，emotion的格式为：
 	"text": string[2000],
 	"accept": string[2000],
 	"createdAt": int64 (Unix时间戳 创建时间)
+	"stringCreatedAt" string (yyyy/mm/dd mm-ss)
 }
 ```
 
@@ -300,6 +304,7 @@ etype = 1 获取坏心情
 	"text": string[2000],
 	"accept": string[2000],
 	"createdAt": int64 (Unix时间戳 创建时间)
+	"stringCreatedAt" string (yyyy/mm/dd mm-ss)
 }
 ```
 
