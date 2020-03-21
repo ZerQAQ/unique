@@ -1,0 +1,53 @@
+GET http://39.97.228.101:8080/kuro/emotion?skey=5577667305947114736&type=random
+Accept: application/json
+
+###
+POST http://39.97.228.101:8080/kuro/src/photo/221/4?skey=1&filetype=jpg
+Content-Type: application/json
+
+< 4.jpg
+
+###
+
+POST http://39.97.228.101:8080/kuro/login
+Content-Type: application/json
+
+{"id": 123321, "password": "123321"}
+
+###
+GET http://39.97.228.101:8080/kuro/motto
+Accept: application/json
+
+###
+POST http://39.97.228.101:8080/kuro/login
+Accept: */*
+Cache-Control: no-cache
+
+{"id": 1, "password": "1"}
+
+
+###
+GET http://39.97.228.101:8080/kuro/user?skey=4533291531609594001
+Accept: application/json
+###
+POST http://39.97.228.101:8080/kuro/user?skey=947406850690932915&type=modify
+Accept: */*
+Cache-Control: no-cache
+
+{"nick": "owo"}
+
+###
+
+POST http://39.97.228.101:8080/kuro/emotion?skey=5577667305947114736
+Content-Type: application/json
+
+{
+  "stars": 5,
+  "type": 0,
+  "content": 0,
+  "text": "-v-!",
+  "photoNum": 0
+}
+
+###
+

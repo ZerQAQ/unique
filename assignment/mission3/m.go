@@ -86,7 +86,7 @@ func delSession (str string) int64 {
 	return 1
 }
 
-func maintainSeesion(){
+func maintainSession(){
 	for true {
 		for id := range Sessions{
 			life := SessionsLifetime[id]
@@ -563,6 +563,7 @@ func postEmotion_Id(c *gin.Context){
 	has, _ := Sql.Get(&emotion{Id: eid})
 
 	if ! has {
+		myLog("eid not exist")
 		quickResp(NotExist, c)
 		return
 	}
@@ -570,13 +571,29 @@ func postEmotion_Id(c *gin.Context){
 	has, _ = Sql.Get(&emotion{Id: eid, Uid: uid})
 
 	if !has {
+		myLog("uid eid not exist")
 		quickResp(SkeyFail, c)
 		return
 	}
 
 	if tp == "delete" {
+		em := emotion{Id:eid}
+		Sql.Get(&em)
+
 		_, err1 := Sql.Delete(emotion{Id: eid})
 		addGrowth(uid, 1)
+
+		u := user{Id:uid}
+		Sql.Get(&u)
+
+		if em.Type == 0 { u.GoodmoodNum -= 1 } else { u.BadmoodNum -= 1 }
+		u.EmotionNum -= 1
+
+		Sql.Id(u.Id).Update(&u)
+		Sql.Id(u.Id).Cols("goodmood_num").Update(&u)
+		Sql.Id(u.Id).Cols("badmood_num").Update(&u)
+		Sql.Id(u.Id).Cols("emotion_num").Update(&u)
+		
 
 		path := fmt.Sprintf("src/%v/%v", uid, eid)
 		err2 := os.RemoveAll(path)
@@ -739,6 +756,8 @@ func getEmotion(c *gin.Context) {
 
 	uid := checkSession(skey)
 
+	myLog(fmt.Sprintf("uid: %v", uid))
+
 	if tp == "random" {
 		var u user
 		u.Id = uid
@@ -747,13 +766,20 @@ func getEmotion(c *gin.Context) {
 		var rEmotion emotion
 
 		if u.EmotionNum == 0 {
+			myLog("uEm = 0")
 			quickResp(NotExist, c)
+			return
 		}
 
-		has, _ := Sql.Where("uid = ? and type = ?", uid, etp).Limit(1, int(rand.Int63() % u.EmotionNum)).Get(&rEmotion)
+		var emotionN int64
+		if etp == 0 { emotionN = u.GoodmoodNum } else { emotionN = u.BadmoodNum }
+
+		has, _ := Sql.Where("uid = ? and type = ?", uid, etp).Limit(1, int(rand.Int63() % emotionN)).Get(&rEmotion)
 
 		if !has {
+			myLog("!has")
 			quickResp(NotExist, c)
+			return
 		}
 
 		fullResp(c, rEmotion)
@@ -796,7 +822,7 @@ func main() {
 	r.Handle("POST", "/user/photo", postUserPhoto)
 
 	delFile("src/2", "head")
-	go maintainSeesion()
+	go maintainSession()
 	go sqlConnectKeepAlife()
 
 	Sessions["1"] = 2
@@ -894,8 +920,8 @@ func getEmotions(c *gin.Context) {
 
 	//组装sql
 	var sql string
-	if full == "0" {sql = "SELECT id,stars,type,content,photo_num,brief,created_at FROM emotion WHERE "} else {
-		sql = "SELECT id,stars,type,content,photo_num,brief,created_at,text,accept FROM emotion WHERE "
+	if full == "0" {sql = "SELECT id,stars,type,content,photo_num,brief,created_at,string_created_at FROM emotion WHERE "} else {
+		sql = "SELECT id,stars,type,content,photo_num,brief,created_at,string_created_at,text,accept FROM emotion WHERE "
 	}
 	sql += where0 + where1 + where2 + where3 + order + limit + ";"
 
@@ -906,7 +932,8 @@ func getEmotions(c *gin.Context) {
 		Brief string `json:"brief" xorm:varchar(100)`
 		Content int64 `json:"content"`
 		PhotoNum int64 `json:"photoNum"`
-		CreatedAt time.Time `json:"createdAt" xorm:"created"`
+		CreatedAt int64 `json:"createdAt"`
+		StringCreatedAt string `json:"stringCreatedAt"`
 	}
 	type emotionListAll struct {
 		Id      int64 `json:"id"`
@@ -915,7 +942,8 @@ func getEmotions(c *gin.Context) {
 		Brief string `json:"brief" xorm:varchar(100)`
 		Content int64 `json:"content"`
 		PhotoNum int64 `json:"photoNum"`
-		CreatedAt time.Time `json:"createdAt" xorm:"created"`
+		CreatedAt int64 `json:"createdAt"`
+		StringCreatedAt string `json:"stringCreatedAt"`
 		Text string `json:"text"`
 		Accept string `json:"accept"`
 	}
@@ -939,7 +967,7 @@ func getEmotions(c *gin.Context) {
 			Num:         int64(len(list)),
 			EmotionList: list,
 		}
-		c.JSON(http.StatusOK, respStruct)
+		fullResp(c, respStruct)
 	} else {
 		list := make([]emotionListAll, 0)
 		err = Sql.Sql(sql).Find(&list)
@@ -958,7 +986,7 @@ func getEmotions(c *gin.Context) {
 			Num:         int64(len(list)),
 			EmotionList: list,
 		}
-		c.JSON(http.StatusOK, respStruct)
+		fullResp(c, respStruct)
 	}
 	return
 }
