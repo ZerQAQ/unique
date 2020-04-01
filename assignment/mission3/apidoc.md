@@ -38,7 +38,7 @@
 
 	createdAt[int64]
 
-	stringCreatedAt[int64]
+	stringCreatedAt[string]
 
 ## DIR
 
@@ -207,7 +207,7 @@ emotionid为:id的第num张图片
 {notload: int64[], url: string} notload里面存着还未上传的照片，是1~photoNum的正整数
 ```
 
-### GET /emotions?skey=&type=&content=&page=&rank=&search=&full= √
+### GET /emotions?skey=&type=&content=&page=&rank=&search=&full= √ *
 
 search
 	模糊搜索给定的字符串，默认是空字符串，代表不搜索
@@ -310,7 +310,7 @@ etype = 1 获取坏心情
 
 
 
-### GET /src/photo/:id/:num&skey= √
+### GET /src/photo/:id/:num&skey= √ *
 
 获取id为:id的心情的第:num张照片(从1开始计数)
 ```
@@ -319,7 +319,7 @@ etype = 1 获取坏心情
 二进制文件
 ```
 
-### GET /src/voice/:id&skey= √
+### GET /src/voice/:id&skey= √ *
 
 获取id为:id的心情的语音
 ```

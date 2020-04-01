@@ -1,0 +1,13 @@
+*.jpg
+/src
+*.bat
+*.ps
+*.exe
+*.png
+*.js
+*.7z
+*.http
+sshlog
+sftplog
+ud
+m

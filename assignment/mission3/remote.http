@@ -1,4 +1,4 @@
-GET http://39.97.228.101:8080/kuro/emotion?skey=5577667305947114736&type=random
+GET http://39.97.228.101:8080/kuro/emotion?skey=5013549271184635643&type=random
 Accept: application/json
 
 ###
@@ -38,7 +38,7 @@ Cache-Control: no-cache
 
 ###
 
-POST http://39.97.228.101:8080/kuro/emotion?skey=5577667305947114736
+POST http://39.97.228.101:8080/kuro/emotion?skey=5013549271184635643
 Content-Type: application/json
 
 {
