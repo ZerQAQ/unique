@@ -1,3 +1,9 @@
+/*
+
+	项目文档见同目录下的apidoc.md
+
+*/
+
 package main
 
 import (
